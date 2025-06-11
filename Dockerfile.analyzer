@@ -1,36 +1,12 @@
 # Fichier : Dockerfile.analyzer
 
-# Utiliser l'image depuis le registre de Microsoft (MCR)
+# Étape 1: Utiliser l'image de base officielle
 FROM mcr.microsoft.com/presidio-analyzer:latest
 
-# Définir l'URL et la version du modèle pour une maintenance facile
-ARG SPACY_MODEL_URL="https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl"
-ARG SPACY_MODEL_NAME="fr_core_news_sm"
+# Étape 2: Installer le modèle de langue français comme avant
+# (On utilise pip directement, c'est plus fiable)
+RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Utiliser pip pour installer directement le modèle depuis son URL.
-# pip est souvent plus verbeux et donnera de meilleures erreurs.
-RUN pip install ${SPACY_MODEL_URL}
-
-# Créer un lien symbolique pour que spaCy puisse trouver le modèle sous son nom court.
-# C'est une étape que "spacy download" fait automatiquement.
-# La bibliothèque spaCy est dans /usr/local/lib/pythonX.Y/site-packages
-# Le nom du répertoire python peut varier, mais cette commande devrait le trouver.
-RUN python -c "import spacy; spacy.cli.link('${SPACY_MODEL_URL##*/}', '${SPACY_MODEL_NAME}', force=True, model_path=spacy.util.get_package_path('${SPACY_MODEL_NAME}'))"
-
-# L'étape ci-dessus est complexe. Essayons une version plus simple en premier.
-# La plupart du temps, un simple "pip install" suffit.
-# Commençons donc par la version la plus simple :
-
-# --- DEBUT DU FICHIER A TESTER ---
-# Fichier : Dockerfile.analyzer (Version simplifiée pour le test)
-
-# Utiliser l'image depuis le registre de Microsoft (MCR)
-FROM mcr.microsoft.com/presidio-analyzer:latest
-
-# Définir l'URL du modèle à installer
-ARG SPACY_MODEL_URL="https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl"
-
-# Simplement utiliser pip pour installer le modèle. C'est l'étape la plus importante.
-# On ajoute --no-cache-dir pour éviter les problèmes de cache dans Docker.
-RUN pip install --no-cache-dir ${SPACY_MODEL_URL}
-# --- FIN DU FICHIER A TESTER ---
+# Étape 3: Copier notre fichier de configuration personnalisé directement dans l'image,
+# à l'emplacement exact que nous avons trouvé.
+COPY ./conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
