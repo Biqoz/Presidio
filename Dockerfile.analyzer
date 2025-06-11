@@ -1,0 +1,8 @@
+# Fichier : Dockerfile.analyzer
+
+# Utiliser l'image de base officielle pour l'analyseur Presidio
+FROM microsoft/presidio-analyzer:latest
+
+# Installer le modèle de langue français "fr_core_news_sm" de spaCy
+# Vous pouvez choisir un modèle plus grand si besoin : fr_core_news_md ou fr_core_news_lg
+RUN python -m spacy download fr_core_news_sm
