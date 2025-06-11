@@ -26,9 +26,10 @@ services:
     ports:
       - "5001"
     volumes:
-      # === LE CHEMIN CORRECT TROUVÉ GRÂCE À VOUS EST ICI ===
-      # On monte notre configuration locale dans le VRAI répertoire du conteneur.
-      - ./conf:/usr/bin/presidio-analyzer/presidio_analyzer/conf
+      # === LA CORRECTION FINALE EST ICI ===
+      # On monte notre fichier local directement sur le fichier de destination.
+      # Cela préserve tous les autres fichiers dans le dossier /conf du conteneur.
+      - ./conf/default.yaml:/usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
 
   # Le service qui anonymise les PII détectées
   presidio-anonymizer:
