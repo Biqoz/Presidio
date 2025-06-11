@@ -1,0 +1,16 @@
+# conf/default.yaml
+
+# NLP Configuration
+nlp_engine_name: spacy
+
+# Supported languages for Spacy NLP engine
+supported_languages:
+  - en
+  - fr # <-- On ajoute le français ici !
+  
+# spaCy models for each language
+models:
+  - lang_code: en
+    model_name: en_core_web_lg
+  - lang_code: fr # <-- Et on dit quel modèle utiliser
+    model_name: fr_core_news_sm
