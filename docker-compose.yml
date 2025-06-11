@@ -25,11 +25,8 @@ services:
     restart: unless-stopped
     ports:
       - "5001"
-    volumes:
-      # === LA CORRECTION FINALE EST ICI ===
-      # On monte notre fichier local directement sur le fichier de destination.
-      # Cela préserve tous les autres fichiers dans le dossier /conf du conteneur.
-      - ./conf/default.yaml:/usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+    # === LA SECTION 'VOLUMES' EST SUPPRIMÉE ===
+    # La configuration est maintenant intégrée à l'image via le Dockerfile.
 
   # Le service qui anonymise les PII détectées
   presidio-anonymizer:
