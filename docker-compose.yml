@@ -1,0 +1,37 @@
+# Fichier : docker-compose.yml
+version: '3.8'
+
+services:
+  # Le service principal de l'API que votre app Next.js appellera
+  presidio-api:
+    image: microsoft/presidio-api:latest
+    container_name: presidio-api
+    restart: unless-stopped
+    ports:
+      - "3000" # Coolify gérera l'exposition de ce port
+    depends_on:
+      - presidio-analyzer
+      - presidio-anonymizer
+    environment:
+      # Assurez-vous que les noms des services correspondent
+      PRESIDIO_ANALYZER_SERVICE_URL: http://presidio-analyzer:5001
+      PRESIDIO_ANONYMIZER_SERVICE_URL: http://presidio-anonymizer:5002
+
+  # Le service qui détecte les PII (avec le support du français)
+  presidio-analyzer:
+    # AU LIEU de "image: microsoft/presidio-analyzer:latest", on utilise "build"
+    build:
+      context: .
+      dockerfile: Dockerfile.analyzer
+    container_name: presidio-analyzer
+    restart: unless-stopped
+    ports:
+      - "5001"
+
+  # Le service qui anonymise les PII détectées
+  presidio-anonymizer:
+    image: microsoft/presidio-anonymizer:latest
+    container_name: presidio-anonymizer
+    restart: unless-stopped
+    ports:
+      - "5002"
