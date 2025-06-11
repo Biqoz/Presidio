@@ -2,7 +2,7 @@
 version: '3.8'
 
 services:
-  # Le service principal de l'API que votre app Next.js appellera
+  # Le service principal de l'API
   presidio-api:
     image: mcr.microsoft.com/presidio-api:latest
     container_name: presidio-api
@@ -13,10 +13,19 @@ services:
       - presidio-analyzer
       - presidio-anonymizer
     environment:
+      # Variables pour trouver les autres services
       PRESIDIO_ANALYZER_SERVICE_URL: http://presidio-analyzer:5001
       PRESIDIO_ANONYMIZER_SERVICE_URL: http://presidio-anonymizer:5002
+      
+      # === AJOUTS FINALS CI-DESSOUS ===
+      
+      # 1. Rendre l'API plus patiente (120 secondes au lieu de 30)
+      PRESIDIO_API_TIMEOUT: "120"
+      
+      # 2. Autoriser les requêtes de n'importe où (corrige l'erreur CORS)
+      CORS_ORIGINS: "*"
 
-  # Le service qui détecte les PII (avec le support du français)
+  # Le service qui détecte les PII
   presidio-analyzer:
     build:
       context: .
@@ -25,10 +34,9 @@ services:
     restart: unless-stopped
     ports:
       - "5001"
-    # === LA SECTION 'VOLUMES' EST SUPPRIMÉE ===
-    # La configuration est maintenant intégrée à l'image via le Dockerfile.
+    # Note: la section volumes a été supprimée, c'est la bonne configuration
 
-  # Le service qui anonymise les PII détectées
+  # Le service qui anonymise
   presidio-anonymizer:
     image: mcr.microsoft.com/presidio-anonymizer:latest
     container_name: presidio-anonymizer
