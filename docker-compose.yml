@@ -10,19 +10,15 @@ services:
     ports:
       - "3000"
     depends_on:
-      - presidio-analyzer
-      - presidio-anonymizer
+      # === MODIFICATION IMPORTANTE ICI ===
+      presidio-analyzer:
+        condition: service_healthy # Ne démarre que si l'analyzer est "en bonne santé"
+      presidio-anonymizer:
+        condition: service_started # L'anonymizer est simple, on attend juste qu'il démarre
     environment:
-      # Variables pour trouver les autres services
       PRESIDIO_ANALYZER_SERVICE_URL: http://presidio-analyzer:5001
       PRESIDIO_ANONYMIZER_SERVICE_URL: http://presidio-anonymizer:5002
-      
-      # === AJOUTS FINALS CI-DESSOUS ===
-      
-      # 1. Rendre l'API plus patiente (120 secondes au lieu de 30)
       PRESIDIO_API_TIMEOUT: "120"
-      
-      # 2. Autoriser les requêtes de n'importe où (corrige l'erreur CORS)
       CORS_ORIGINS: "*"
 
   # Le service qui détecte les PII
@@ -34,7 +30,14 @@ services:
     restart: unless-stopped
     ports:
       - "5001"
-    # Note: la section volumes a été supprimée, c'est la bonne configuration
+    # === AJOUT DU BILAN DE SANTÉ (HEALTHCHECK) ===
+    healthcheck:
+      # Commande à exécuter pour vérifier la santé. Elle appelle l'endpoint /health.
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s    # Vérifier toutes les 30 secondes
+      timeout: 10s     # Considérer l'échec si la commande prend plus de 10s
+      retries: 5       # Essayer 5 fois avant de déclarer le service comme "unhealthy"
+      start_period: 60s # Ne pas commencer les vérifications avant 60s, pour lui laisser le temps de charger le modèle
 
   # Le service qui anonymise
   presidio-anonymizer:
