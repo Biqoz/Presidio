@@ -3,5 +3,23 @@
 # Utiliser l'image depuis le registre de Microsoft (MCR)
 FROM mcr.microsoft.com/presidio-analyzer:latest
 
-# Installer le modèle de langue français "fr_core_news_sm" de spaCy
+# Changer l'utilisateur pour 'root' afin d'avoir les permissions d'installer des paquets
+USER root
+
+# Mettre à jour les paquets et installer les outils de construction essentiels
+# - build-essential : contient des outils comme gcc, make, etc.
+# - python3-dev : contient les fichiers d'en-tête pour compiler des extensions Python.
+# --no-install-recommends est une bonne pratique pour garder l'image légère.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Revenir à l'utilisateur par défaut de l'image (bonne pratique de sécurité)
+# L'utilisateur par défaut dans beaucoup d'images est 'app' ou un non-root.
+# Si cela cause un problème, on peut essayer de l'enlever, mais c'est mieux avec.
+# On va commenter cette ligne pour l'instant pour plus de simplicité, on la remettra si besoin.
+# USER 1001
+
+# Maintenant, installer le modèle de langue français de spaCy
 RUN python -m spacy download fr_core_news_sm
