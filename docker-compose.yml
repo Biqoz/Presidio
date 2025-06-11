@@ -8,12 +8,11 @@ services:
     container_name: presidio-api
     restart: unless-stopped
     ports:
-      - "3000" # Coolify gérera l'exposition de ce port
+      - "3000"
     depends_on:
       - presidio-analyzer
       - presidio-anonymizer
     environment:
-      # Ces variables restent nécessaires pour que l'API sache où trouver ses collègues
       PRESIDIO_ANALYZER_SERVICE_URL: http://presidio-analyzer:5001
       PRESIDIO_ANONYMIZER_SERVICE_URL: http://presidio-anonymizer:5002
 
@@ -27,12 +26,9 @@ services:
     ports:
       - "5001"
     volumes:
-      # === LA MODIFICATION EST ICI ===
-      # On monte notre dossier 'conf' local dans le conteneur.
-      # Le contenu de notre fichier ./conf/default.yaml va écraser celui par défaut dans l'image.
-      # Note: Le chemin exact peut dépendre de la version de Python dans l'image.
-      # python3.9 est le plus probable, mais si ça ne marche pas, on pourra essayer python3.8, python3.10, etc.
-      - ./conf:/usr/local/lib/python3.9/site-packages/presidio_analyzer/conf
+      # === LE CHEMIN CORRECT TROUVÉ GRÂCE À VOUS EST ICI ===
+      # On monte notre configuration locale dans le VRAI répertoire du conteneur.
+      - ./conf:/usr/bin/presidio-analyzer/presidio_analyzer/conf
 
   # Le service qui anonymise les PII détectées
   presidio-anonymizer:
