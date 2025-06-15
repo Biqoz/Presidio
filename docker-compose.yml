@@ -6,12 +6,10 @@ services:
       context: .
       dockerfile: Dockerfile.analyzer
     restart: unless-stopped
-    # LA PARTIE LA PLUS IMPORTANTE DE TOUT LE PROJET :
-    # On monte notre dossier de configuration local directement dans le conteneur.
-    # Cela garantit que Presidio utilise NOS fichiers, pas les siens.
-    volumes:
-      - ./presidio_config:/usr/local/lib/python3.9/site-packages/presidio_analyzer/conf
-      - ./presidio_config:/app/presidio_config # On le monte aussi ici pour l'import python
+    # LA LIGNE QUI FORCE LA CONFIGURATION :
+    # On dit au script de démarrage de Presidio d'utiliser NOTRE fichier.
+    environment:
+      - PRESIDIO_CONF_FILE=/app/presidio_config/config.yaml
 
   presidio-anonymizer:
     image: mcr.microsoft.com/presidio-anonymizer:latest
