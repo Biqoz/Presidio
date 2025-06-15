@@ -1,16 +1,16 @@
+# Dockerfile.analyzer
+
 # Étape 1: Utiliser l'image de base officielle
 FROM mcr.microsoft.com/presidio-analyzer:latest
 
 # Étape 2: Installer le modèle de langue français
 RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Étape 3: Copier notre fichier de règles Python
-COPY ./presidio_config/custom_recognizers.py /app/presidio_config/custom_recognizers.py
+# ÉTAPE 3 (LA CLÉ) : ÉCRASER LA CONFIGURATION PAR DÉFAUT
+# On copie notre dossier 'conf' DANS le dossier de l'application où
+# Presidio s'attend à trouver sa propre configuration.
+# Cela remplace le default.yaml de l'image par le nôtre.
+COPY ./conf/ /app/presidio_analyzer/conf/
 
-# ÉTAPE 4 (LA PLUS IMPORTANTE) : Écraser la configuration par défaut par la nôtre.
-# On prend notre fichier default.yaml et on le place à l'endroit exact
-# où Presidio s'attend à trouver sa configuration.
-COPY ./presidio_config/default.yaml /usr/local/lib/python3.9/site-packages/presidio_analyzer/conf/default.yaml
-
-# On supprime complètement la ligne CMD. On laisse l'image utiliser
-# sa propre commande de démarrage, qui est maintenant garantie de fonctionner.
+# ÉTAPE 4 : Copier nos règles Python pour qu'elles soient importables
+COPY ./presidio_config/ /app/presidio_config/
