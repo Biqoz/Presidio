@@ -1,19 +1,15 @@
-# conf/default.yaml
+# Notre configuration maître unique.
 
-# 1. Configuration du moteur de langage (NLP)
+# 1. NLP Configuration
 nlp_engine_name: spacy
-supported_languages:
-  - en
-  - fr # <-- On déclare le support du français
-
+supported_languages: [en, fr]
 models:
   - lang_code: en
     model_name: en_core_web_lg
-  - lang_code: fr # <-- On associe le code 'fr' au modèle spaCy
+  - lang_code: fr
     model_name: fr_core_news_sm
 
-# 2. Configuration des détecteurs.
-# C'est ici qu'on dit à Presidio de charger nos règles Python.
-# Le chemin doit être accessible par le système d'import Python.
+# 2. Recognizer Registry
+# On dit à Presidio de charger nos règles Python.
 recognizer_registry:
   - presidio_config.custom_recognizers.custom_recognizers
