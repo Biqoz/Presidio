@@ -1,5 +1,12 @@
+# Fichier : Dockerfile.analyzer
+
 # Étape 1: Utiliser l'image de base officielle
 FROM mcr.microsoft.com/presidio-analyzer:latest
 
-# Étape 2: Installer le modèle de langue français. C'est tout.
+# Étape 2: Installer le modèle de langue français comme avant
+# (On utilise pip directement, c'est plus fiable)
 RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
+
+# Étape 3: Copier notre fichier de configuration personnalisé directement dans l'image,
+# à l'emplacement exact que nous avons trouvé.
+COPY ./conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
