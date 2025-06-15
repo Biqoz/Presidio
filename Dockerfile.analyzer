@@ -10,3 +10,5 @@ RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/release
 # Étape 3: Copier notre fichier de configuration personnalisé directement dans l'image,
 # à l'emplacement exact que nous avons trouvé.
 COPY ./conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+
+COPY ./presidio_config/ /app/presidio_config/
