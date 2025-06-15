@@ -1,22 +1,18 @@
-# Fichier : docker-compose.yml (Version simplifiée)
 version: '3.8'
 
 services:
-  # Le service qui détecte les PII. Il est maintenant exposé publiquement.
   presidio-analyzer:
     build:
       context: .
       dockerfile: Dockerfile.analyzer
-    container_name: presidio-analyzer
     restart: unless-stopped
-    ports:
-      - "5001" # Le port interne
+    # LA PARTIE LA PLUS IMPORTANTE DE TOUT LE PROJET :
+    # On monte notre dossier de configuration local directement dans le conteneur.
+    # Cela garantit que Presidio utilise NOS fichiers, pas les siens.
+    volumes:
+      - ./presidio_config:/usr/local/lib/python3.9/site-packages/presidio_analyzer/conf
+      - ./presidio_config:/app/presidio_config # On le monte aussi ici pour l'import python
 
-  # Le service qui anonymise. Il est maintenant exposé publiquement.
   presidio-anonymizer:
     image: mcr.microsoft.com/presidio-anonymizer:latest
-    container_name: presidio-anonymizer
     restart: unless-stopped
-    ports:
-      - "5002" # Le port interne
-
