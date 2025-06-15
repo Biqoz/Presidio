@@ -1,8 +1,6 @@
-# Fichier : docker-compose.yml (Version simplifiée)
 version: '3.8'
 
 services:
-  # Le service qui détecte les PII. Il est maintenant exposé publiquement.
   presidio-analyzer:
     build:
       context: .
@@ -10,12 +8,11 @@ services:
     container_name: presidio-analyzer
     restart: unless-stopped
     ports:
-      - "5001" # Le port interne
+      - "5001" 
 
-  # Le service qui anonymise. Il est maintenant exposé publiquement.
   presidio-anonymizer:
     image: mcr.microsoft.com/presidio-anonymizer:latest
     container_name: presidio-anonymizer
     restart: unless-stopped
     ports:
-      - "5002" # Le port interne
+      - "5002"
