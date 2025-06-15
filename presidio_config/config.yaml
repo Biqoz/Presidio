@@ -1,0 +1,19 @@
+# Ce fichier est notre configuration maître pour l'analyseur Presidio.
+
+# 1. Configuration du moteur de langage (NLP)
+nlp_engine_name: spacy
+supported_languages:
+  - en
+  - fr # <-- On déclare officiellement le support du français
+
+models:
+  - lang_code: en
+    model_name: en_core_web_lg
+  - lang_code: fr # <-- On associe le code 'fr' au modèle spaCy que nous avons installé
+    model_name: fr_core_news_sm
+
+# 2. Configuration des détecteurs (Recognizer Registry)
+# C'est ici qu'on lui dit de charger notre fichier de règles Python.
+recognizer_registry:
+  # Syntaxe : nom_dossier.nom_fichier.nom_de_la_liste_dans_le_fichier
+  - presidio_config.custom_recognizers.custom_recognizers
