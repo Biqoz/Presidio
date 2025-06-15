@@ -4,13 +4,9 @@ FROM mcr.microsoft.com/presidio-analyzer:latest
 # Étape 2: Installer le modèle de langue français
 RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# ÉTAPE 3 (CORRIGÉE) : ON NE CHANGE PAS LE RÉPERTOIRE DE TRAVAIL.
-# La ligne "WORKDIR /app" est supprimée car elle cassait le démarrage de Poetry.
+# Étape 3: Copier l'intégralité de notre dossier de configuration dans l'image
+COPY ./presidio_config/ /app/presidio_config/
 
-# ÉTAPE 4 (CORRIGÉE) : On copie nos règles dans un nouveau dossier à la racine,
-# qui n'interfère pas avec l'application Presidio existante.
-COPY ./presidio_config/ /presidio_config/
-
-# ÉTAPE 5 (LA CLÉ) : On utilise une variable d'environnement pour dire à Presidio
-# de charger notre module de règles Python au démarrage.
-ENV RECOGNIZERS_MODULE_PATH=/presidio_config/custom_recognizers.py
+# ÉTAPE 4 (LA PLUS IMPORTANTE) : Démarrer le serveur en le forçant à utiliser notre configuration
+# Cela ordonne à Presidio d'utiliser nos règles et nos modèles de langue.
+CMD ["gunicorn", "-b", "0.0.0.0:3000", "presidio_analyzer.main:app", "--conf-file", "/app/presidio_config/config.yaml"]
