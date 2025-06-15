@@ -7,12 +7,11 @@ services:
       dockerfile: Dockerfile.analyzer
     container_name: presidio-analyzer
     restart: unless-stopped
-    ports:
-      - "5001" 
+    # On supprime la section 'ports'. Coolify va gérer l'exposition et
+    # l'assignation d'une URL publique automatiquement.
 
   presidio-anonymizer:
     image: mcr.microsoft.com/presidio-anonymizer:latest
     container_name: presidio-anonymizer
     restart: unless-stopped
-    ports:
-      - "5002"
+    # On supprime aussi la section 'ports' ici pour la même raison.
