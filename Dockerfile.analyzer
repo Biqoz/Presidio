@@ -9,9 +9,6 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir \
     https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Copier LES DEUX fichiers de configuration
-COPY ./presidio_config/conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
-COPY ./presidio_config/conf/default_analyzer.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default_analyzer.yaml
 
 # Installer les dépendances supplémentaires
 COPY requirements.txt /tmp/
