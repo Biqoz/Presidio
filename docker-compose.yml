@@ -9,10 +9,11 @@ services:
     restart: unless-stopped
     ports:
       - "5001"
-    # Forcer l'utilisateur root si nécessaire
-    user: "0:0"
     environment:
       - PRESIDIO_ANALYZER_DEFAULT_LANGUAGE=fr
+    # Spécifier la commande directement pour éviter Poetry
+    command: ["python", "-m", "presidio_analyzer"]
+    working_dir: /usr/bin/presidio-analyzer
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
       interval: 30s
