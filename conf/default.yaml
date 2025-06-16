@@ -38,6 +38,7 @@ recognizer_registry:
   - name: CryptoRecognizer
   
   # On charge TOUTES nos règles personnalisées
+  - default
   - presidio_config.custom_recognizers.custom_recognizers
 
 # 4. Configuration de la post-analyse (Allow List)
