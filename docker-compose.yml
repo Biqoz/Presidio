@@ -11,7 +11,7 @@ services:
       - "5001"
     environment:
       - PRESIDIO_ANALYZER_DEFAULT_LANGUAGE=fr
-    # Supprimer la ligne command pour utiliser la commande par défaut
+    # Ne pas spécifier de command - utiliser celle par défaut
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
       interval: 30s
