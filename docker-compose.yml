@@ -11,10 +11,6 @@ services:
       - "3000"
     environment:
       - PRESIDIO_ANALYZER_DEFAULT_LANGUAGE=fr
-      - PYTHONPATH=/usr/bin/presidio-analyzer:/app
-      - PYTHONUNBUFFERED=1
-      - LOG_LEVEL=DEBUG
-    # SUPPRIMER la ligne 'command' - utiliser la commande par défaut
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
