@@ -1,5 +1,5 @@
 # =====================================================================
-# FICHIER DE CONFIGURATION MAÎTRE FINAL ET GARANTI
+# FICHIER DE CONFIGURATION MAÎTRE DE QUALITÉ PRODUCTION
 # =====================================================================
 
 # 1. Configuration du moteur de langage (NLP)
@@ -17,17 +17,31 @@ ner_model_configuration:
   labels_to_ignore:
     - MISC
 
-# 3. Configuration des détecteurs (Recognizers)
-# LA PARTIE LA PLUS IMPORTANTE - CORRIGÉE
-# C'est une liste. On dit à Presidio de charger :
-#   - D'ABORD, la collection de tous ses détecteurs par défaut.
-#   - ENSUITE, d'ajouter les nôtres depuis notre fichier Python.
+# 3. Configuration des détecteurs (Recognizers) - LA PARTIE LA PLUS IMPORTANTE
+# On charge explicitement tous les outils dont nous avons besoin.
 recognizer_registry:
-  - default
+  # On charge le moteur principal pour les entités de base (PERSON, LOCATION, ORG)
+  - name: SpacyRecognizer
+    supported_language: fr
+  - name: SpacyRecognizer
+    supported_language: en
+    
+  # On charge TOUS les reconnaisseurs universels pertinents pour le RGPD
+  - name: EmailRecognizer
+  - name: PhoneRecognizer # --> Sera amélioré par notre règle custom
+  - name: IbanRecognizer # --> Sera amélioré par notre règle custom
+  - name: CreditCardRecognizer
+  - name: DateRecognizer
+  - name: UrlRecognizer
+  - name: IpRecognizer
+  - name: MedicalLicenseRecognizer
+  - name: CryptoRecognizer
+  
+  # On charge TOUTES nos règles personnalisées
   - presidio_config.custom_recognizers.custom_recognizers
 
 # 4. Configuration de la post-analyse (Allow List)
-# Notre filet de sécurité pour les mots à ne jamais anonymiser.
+# Notre filet de sécurité pour les faux positifs.
 analysis_explanations:
   allow_list:
     - Contrat
