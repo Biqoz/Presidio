@@ -1,30 +1,27 @@
 # Utiliser l'image officielle Presidio Analyzer
 FROM mcr.microsoft.com/presidio-analyzer:latest
 
-# Rester en root pour éviter les problèmes d'utilisateur
+# Passer en root pour les installations
 USER root
 
-# Installer les dépendances système
+# Installer les dépendances système nécessaires
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Installer le modèle spaCy français
+# Installer le modèle spaCy français directement
 RUN pip install --no-cache-dir \
     https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Copier la configuration
-COPY ./presidio_config/ /app/presidio_config/
+# Copier la configuration personnalisée
+COPY ./presidio_config/ /usr/bin/presidio-analyzer/presidio_config/
 COPY ./presidio_config/conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
 
 # Installer les dépendances supplémentaires
-COPY requirements.txt /app/
-RUN pip install --no-cache-dir -r /app/requirements.txt
-
-# Définir le répertoire de travail
-WORKDIR /app
+COPY requirements.txt /tmp/
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Exposer le port
 EXPOSE 5001
 
-# Utiliser la commande par défaut de l'image de base
+# Ne pas spécifier de CMD - utiliser celle de l'image de base
