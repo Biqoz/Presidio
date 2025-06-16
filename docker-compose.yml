@@ -11,12 +11,9 @@ services:
       - "5001"
     environment:
       - PRESIDIO_ANALYZER_DEFAULT_LANGUAGE=fr
-    # Ne pas spécifier de command - utiliser celle par défaut
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - GUNICORN_CMD_ARGS="--log-level debug --error-logfile - --access-logfile -"
+    command: ["gunicorn", "--bind", "0.0.0.0:3000", "--workers", "1", "--log-level", "debug", "--error-logfile", "-", "presidio_analyzer.app:app"]
+
 
   presidio-anonymizer:
     image: mcr.microsoft.com/presidio-anonymizer:latest
