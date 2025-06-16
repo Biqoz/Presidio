@@ -1,15 +1,31 @@
-
-# Fichier : Dockerfile.analyzer
-
-# Étape 1: Utiliser l'image de base officielle
+# Utiliser l'image officielle Presidio Analyzer
 FROM mcr.microsoft.com/presidio-analyzer:latest
 
-# Étape 2: Installer le modèle de langue français comme avant
-# (On utilise pip directement, c'est plus fiable)
-RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
+# Installer les dépendances système nécessaires
+USER root
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Étape 3: Copier notre fichier de configuration personnalisé directement dans l'image,
-# à l'emplacement exact que nous avons trouvé.
-COPY ./conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+# Revenir à l'utilisateur presidio
+USER presidio
 
-COPY ./presidio_config/ /app/presidio_config/
+# Installer le modèle spaCy français
+RUN pip install --no-cache-dir \
+    https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
+
+# Copier la configuration personnalisée
+COPY --chown=presidio:presidio ./presidio_config/ /app/presidio_config/
+COPY --chown=presidio:presidio ./presidio_config/conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+
+# Installer les dépendances Python supplémentaires si nécessaire
+COPY --chown=presidio:presidio requirements.txt /app/
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Exposer le port
+EXPOSE 5001
+
+# Commande de démarrage (héritée de l'image de base)
