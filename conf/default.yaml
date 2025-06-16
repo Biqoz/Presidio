@@ -1,81 +1,61 @@
-# Configuration Presidio pour documents français/belges
-nlp_engine_name: spacy
-supported_languages: [en, fr]
+# Configuration NLP unifiée
+nlp_configuration:
+  nlp_engine_name: spacy
+  models:
+    - lang_code: en
+      model_name: en_core_web_lg
+    - lang_code: fr
+      model_name: fr_core_news_sm
 
-# Configuration des modèles NLP
-models:
-  - lang_code: en
-    model_name: en_core_web_lg
-  - lang_code: fr
-    model_name: fr_core_news_sm
+  ner_model_configuration:
+    model_to_presidio_entity_mapping:
+      PER: PERSON
+      PERSON: PERSON
+      ORG: ORGANIZATION
+      ORGANIZATION: ORGANIZATION
+      LOC: LOCATION
+      LOCATION: LOCATION
+      GPE: LOCATION
+      MISC: ORGANIZATION
 
-# Configuration du moteur NLP
-ner_model_configuration:
-  labels_to_ignore:
-    - MISC
-  confidence_threshold:
-    default: 0.35
-    EMAIL_ADDRESS: 0.4
-    PHONE_NUMBER: 0.5
-    PERSON: 0.6
+    confidence_threshold:
+      default: 0.35
+      EMAIL_ADDRESS: 0.4
+      PHONE_NUMBER: 0.5
+      PERSON: 0.6
 
-# Configuration des reconnaisseurs - UTILISER SEULEMENT LES RECONNAISSEURS PAR DÉFAUT
+    labels_to_ignore:
+      - MISC
+      - CARDINAL
+      - EVENT
+      - LANGUAGE
+      - LAW
+      - MONEY
+      - ORDINAL
+      - PERCENT
+      - PRODUCT
+      - QUANTITY
+      - WORK_OF_ART
+
+# Configuration des langues supportées
+supported_languages:
+  - en
+  - fr
+
+# Configuration du registre
 recognizer_registry:
   - default
 
-# Liste des termes à ignorer (faux positifs)
+# Liste d'exclusion pour éviter les faux positifs
 allow_list:
   - Contrat
-  - contrat
-  - Contrats
   - Document
-  - document
   - Société
-  - Investisseur
   - Montant
-  - Prêt
-  - Intérêt
-  - Intérêts
   - Partie
-  - Parties
   - Annexe
-  - Remboursement
-  - Conversion
-  - Financement
-  - Sortie
-  - Juste Valeur Marchande
-  - Échéance
-  - Clause
-  - Clauses
-  - Principe
-  - Coûts
-  - Notifications
-  - Article
-  - Paragraphe
-  - Directeur
-  - Gérant
-  - Président
   - Euro
   - EUR
-  - Euros
-  - Pourcentage
   - Taux
   - Valeur
   - Prix
-  - Loi
-  - Code
-  - Règlement
-  - Décret
-  - Arrêté
-  - Janvier
-  - Février
-  - Mars
-  - Avril
-  - Mai
-  - Juin
-  - Juillet
-  - Août
-  - Septembre
-  - Octobre
-  - Novembre
-  - Décembre
