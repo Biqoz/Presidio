@@ -1,13 +1,82 @@
-# Configuration minimale pour test
+# Configuration Presidio pour documents français/belges
 nlp_engine_name: spacy
 supported_languages: [en, fr]
+
+# Configuration des modèles NLP
 models:
   - lang_code: en
     model_name: en_core_web_lg
   - lang_code: fr
     model_name: fr_core_news_sm
 
-# Commentez temporairement les reconnaisseurs personnalisés
-# recognizer_registry:
-#   - default
-#   - presidio_config.custom_recognizers.custom_recognizers
+# Configuration du moteur NLP
+ner_model_configuration:
+  labels_to_ignore:
+    - MISC
+  confidence_threshold:
+    default: 0.35
+    EMAIL_ADDRESS: 0.5
+    PHONE_NUMBER: 0.6
+    PERSON: 0.7
+
+# Configuration des reconnaisseurs
+recognizer_registry:
+  - default
+  - presidio_config.custom_recognizers
+
+# Liste des termes à ignorer (faux positifs)
+allow_list:
+  - Contrat
+  - contrat
+  - Contrats
+  - Document
+  - document
+  - Société
+  - Investisseur
+  - Montant
+  - Prêt
+  - Intérêt
+  - Intérêts
+  - Partie
+  - Parties
+  - Annexe
+  - Remboursement
+  - Conversion
+  - Financement
+  - Sortie
+  - Juste Valeur Marchande
+  - Échéance
+  - Clause
+  - Clauses
+  - Principe
+  - Coûts
+  - Notifications
+  - Article
+  - Paragraphe
+  - Directeur
+  - Gérant
+  - Président
+  - Euro
+  - EUR
+  - Euros
+  - Pourcentage
+  - Taux
+  - Valeur
+  - Prix
+  - Loi
+  - Code
+  - Règlement
+  - Décret
+  - Arrêté
+  - Janvier
+  - Février
+  - Mars
+  - Avril
+  - Mai
+  - Juin
+  - Juillet
+  - Août
+  - Septembre
+  - Octobre
+  - Novembre
+  - Décembre
