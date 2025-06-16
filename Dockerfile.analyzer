@@ -1,16 +1,16 @@
-
-# Étape 1: Utiliser l'image de base qui contient Presidio et ses dépendances
+# Étape 1: Utiliser l'image de base officielle
 FROM mcr.microsoft.com/presidio-analyzer:latest
 
-# Étape 2: Installer le modèle de langue français et Gunicorn
-RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl gunicorn
+# Étape 2: Installer le modèle de langue français
+RUN pip install --no-cache-dir https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Étape 3: Copier notre code de configuration et de démarrage
-WORKDIR /app
+# ÉTAPE 3 (LA PLUS IMPORTANTE) : ÉCRASER LA CONFIGURATION PAR DÉFAUT
+# On copie notre dossier 'conf' DANS le dossier de l'application où
+# Presidio s'attend à trouver sa propre configuration. C'est le bon chemin.
+COPY ./conf/ /app/presidio_analyzer/conf/
+
+# ÉTAPE 4 : COPIER NOS RÈGLES PYTHON POUR QU'ELLES SOIENT IMPORTABLES
+# Le script de démarrage s'exécute depuis /app, donc ce chemin sera valide pour l'import.
 COPY ./presidio_config/ /app/presidio_config/
-COPY ./start.py /app/start.py
 
-# ÉTAPE 4 : LANCER NOTRE PROPRE SCRIPT
-# On ignore complètement le script de démarrage de Presidio.
-# C'est notre code qui est aux commandes.
-CMD ["python", "/app/start.py"]
+# ON NE TOUCHE PAS À LA COMMANDE DE DÉMARRAGE. On laisse l'image démarrer normalement.
