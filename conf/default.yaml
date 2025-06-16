@@ -1,9 +1,8 @@
 # =====================================================================
-# FICHIER DE CONFIGURATION MAÎTRE FINAL ET GARANTI
+# FICHIER DE CONFIGURATION MAÎTRE CORRIGÉ
 # =====================================================================
 
 # 1. Configuration du moteur de langage (NLP)
-# On déclare notre support pour le français et on l'associe au bon modèle.
 nlp_engine_name: spacy
 supported_languages: [en, fr]
 models:
@@ -13,49 +12,44 @@ models:
     model_name: fr_core_news_sm
 
 # 2. Configuration du comportement du moteur NLP
-# On ignore l'étiquette "MISC" pour éviter les faux positifs et les warnings.
 ner_model_configuration:
   labels_to_ignore:
     - MISC
 
-# 3. Configuration des détecteurs (Recognizers) - LA PARTIE LA PLUS IMPORTANTE
-# On dit à Presidio de charger d'ABORD tous ses détecteurs par défaut...
+# 3. Configuration des détecteurs (Recognizers)
 recognizer_registry:
   - default
-  # ...ET ENSUITE d'ajouter les nôtres depuis notre fichier Python.
   - presidio_config.custom_recognizers.custom_recognizers
 
-# 4. Configuration de la post-analyse (Allow List)
-# Notre filet de sécurité pour les faux positifs.
-analysis_explanations:
-  allow_list:
-    - Contrat
-    - contrat
-    - Contrats
-    - Document
-    - document
-    - Société
-    - Investisseur
-    - Montant
-    - Prêt
-    - Intérêt
-    - Intérêts
-    - Partie
-    - Parties
-    - Annexe
-    - Remboursement
-    - Conversion
-    - Financement
-    - Sortie
-    - Juste Valeur Marchande
-    - Échéance
-    - Clause
-    - Clauses
-    - Principe
-    - Coûts
-    - Notifications
-    - Article
-    - Paragraphe
-    - Directeur
-    - Gérant
-    - Président
+# 4. Configuration de l'allow list (correction de la structure)
+allow_list:
+  - Contrat
+  - contrat
+  - Contrats
+  - Document
+  - document
+  - Société
+  - Investisseur
+  - Montant
+  - Prêt
+  - Intérêt
+  - Intérêts
+  - Partie
+  - Parties
+  - Annexe
+  - Remboursement
+  - Conversion
+  - Financement
+  - Sortie
+  - "Juste Valeur Marchande"
+  - Échéance
+  - Clause
+  - Clauses
+  - Principe
+  - Coûts
+  - Notifications
+  - Article
+  - Paragraphe
+  - Directeur
+  - Gérant
+  - Président
