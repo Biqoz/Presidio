@@ -18,4 +18,3 @@ COPY requirements.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 WORKDIR /usr/bin/presidio-analyzer
-EXPOSE 3000
