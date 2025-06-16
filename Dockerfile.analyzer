@@ -4,12 +4,12 @@ FROM mcr.microsoft.com/presidio-analyzer:latest
 # Passer en root pour les installations
 USER root
 
-# Installer les dépendances système nécessaires
+# Installer les dépendances système
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Installer le modèle spaCy français directement
+# Installer le modèle spaCy français
 RUN pip install --no-cache-dir \
     https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
@@ -22,6 +22,6 @@ COPY requirements.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Exposer le port
-EXPOSE 5001
+EXPOSE 3000
 
-# Ne pas spécifier de CMD - utiliser celle de l'image de base
+# NE PAS spécifier de CMD - utiliser celle de l'image de base
