@@ -1,6 +1,6 @@
-# Notre configuration maître unique.
+# Notre configuration maître finale.
 
-# 1. NLP Configuration
+# 1. Configuration du moteur de langage (NLP)
 nlp_engine_name: spacy
 supported_languages: [en, fr]
 models:
@@ -9,7 +9,54 @@ models:
   - lang_code: fr
     model_name: fr_core_news_sm
 
-# 2. Recognizer Registry
-# On dit à Presidio de charger nos règles Python.
+# =====================================================================
+# ÉTAPE 1 : IGNORER LES ÉTIQUETTES NON PERTINENTES
+# On dit à Presidio d'ignorer complètement l'étiquette "MISC" de spaCy.
+# Cela va nettoyer les logs ET empêcher l'anonymisation des mots non pertinents.
+# =====================================================================
+ner_model_configuration:
+  labels_to_ignore:
+    - MISC
+
+# 2. Configuration des détecteurs
 recognizer_registry:
+  # On charge nos règles personnalisées
   - presidio_config.custom_recognizers.custom_recognizers
+
+# =====================================================================
+# ÉTAPE 2 : LA LISTE BLANCHE (DOUBLE SÉCURITÉ)
+# On donne une liste de mots à ne jamais anonymiser, peu importe le contexte.
+# =====================================================================
+default_explanation: "Identified as {{entity_type}} by {{recognizer_name}} with score of {{score}}"
+analysis_explanations:
+  allow_list:
+    # Mots courants dans les documents légaux/financiers
+    - Contrat
+    - contrat
+    - Contrats
+    - Document
+    - document
+    - Société
+    - Investisseur
+    - Montant
+    - Intérêt
+    - Intérêts
+    - Partie
+    - Parties
+    - Annexe
+    - Remboursement
+    - Conversion
+    - Financement
+    - Sortie
+    - Juste Valeur Marchande
+    - Échéance
+    - Clause
+    - Clauses
+    - Principe
+    - Coûts
+    - Notifications
+    - Article
+    - Paragraphe
+    - Directeur
+    - Gérant
+    - Président
