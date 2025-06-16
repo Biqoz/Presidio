@@ -1,8 +1,4 @@
-# =====================================================================
-# FICHIER DE CONFIGURATION MAÎTRE CORRIGÉ
-# =====================================================================
-
-# 1. Configuration du moteur de langage (NLP)
+# Configuration minimale pour test
 nlp_engine_name: spacy
 supported_languages: [en, fr]
 models:
@@ -11,45 +7,7 @@ models:
   - lang_code: fr
     model_name: fr_core_news_sm
 
-# 2. Configuration du comportement du moteur NLP
-ner_model_configuration:
-  labels_to_ignore:
-    - MISC
-
-# 3. Configuration des détecteurs (Recognizers)
-recognizer_registry:
-  - default
-  - presidio_config.custom_recognizers.custom_recognizers
-
-# 4. Configuration de l'allow list (correction de la structure)
-allow_list:
-  - Contrat
-  - contrat
-  - Contrats
-  - Document
-  - document
-  - Société
-  - Investisseur
-  - Montant
-  - Prêt
-  - Intérêt
-  - Intérêts
-  - Partie
-  - Parties
-  - Annexe
-  - Remboursement
-  - Conversion
-  - Financement
-  - Sortie
-  - "Juste Valeur Marchande"
-  - Échéance
-  - Clause
-  - Clauses
-  - Principe
-  - Coûts
-  - Notifications
-  - Article
-  - Paragraphe
-  - Directeur
-  - Gérant
-  - Président
+# Commentez temporairement les reconnaisseurs personnalisés
+# recognizer_registry:
+#   - default
+#   - presidio_config.custom_recognizers.custom_recognizers
