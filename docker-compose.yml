@@ -2,15 +2,13 @@ version: '3.8'
 
 services:
   presidio-analyzer:
-    build:
-      context: .
-      dockerfile: Dockerfile.analyzer
+    image: mcr.microsoft.com/presidio-analyzer:latest
     container_name: presidio-analyzer
     restart: unless-stopped
     ports:
       - "3000"
     environment:
-      - PRESIDIO_ANALYZER_DEFAULT_LANGUAGE=fr
+      - PRESIDIO_ANALYZER_DEFAULT_LANGUAGE=en
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
