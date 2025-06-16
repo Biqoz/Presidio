@@ -1,7 +1,7 @@
 # Utiliser l'image officielle Presidio Analyzer
 FROM mcr.microsoft.com/presidio-analyzer:latest
 
-# Passer en root pour les installations
+# Rester en root pour éviter les problèmes d'utilisateur
 USER root
 
 # Installer les dépendances système
@@ -17,16 +17,18 @@ RUN pip install --no-cache-dir \
 RUN mkdir -p /app/presidio_config/conf
 
 # Copier les fichiers de configuration personnalisée
-COPY --chown=presidio:presidio ./presidio_config/__init__.py /app/presidio_config/
-COPY --chown=presidio:presidio ./presidio_config/custom_recognizers.py /app/presidio_config/
-COPY --chown=presidio:presidio ./presidio_config/conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+COPY ./presidio_config/__init__.py /app/presidio_config/
+COPY ./presidio_config/custom_recognizers.py /app/presidio_config/
+COPY ./presidio_config/conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
 
 # Installer les dépendances Python supplémentaires
 COPY requirements.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Revenir à l'utilisateur presidio
-USER presidio
+# Définir le répertoire de travail
+WORKDIR /usr/bin/presidio-analyzer
 
 # Exposer le port
 EXPOSE 3000
+
+# Utiliser la commande par défaut de l'image de base
