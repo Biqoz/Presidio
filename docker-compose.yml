@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # Service de détection des PII avec modèle français
   presidio-analyzer:
     build:
       context: .
@@ -10,6 +9,8 @@ services:
     restart: unless-stopped
     ports:
       - "5001"
+    # Forcer l'utilisateur root si nécessaire
+    user: "0:0"
     environment:
       - PRESIDIO_ANALYZER_DEFAULT_LANGUAGE=fr
     healthcheck:
@@ -18,7 +19,6 @@ services:
       timeout: 10s
       retries: 3
 
-  # Service d'anonymisation
   presidio-anonymizer:
     image: mcr.microsoft.com/presidio-anonymizer:latest
     container_name: presidio-anonymizer
