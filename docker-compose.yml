@@ -6,10 +6,6 @@ services:
       context: .
       dockerfile: Dockerfile.analyzer
     restart: unless-stopped
-    # LA LIGNE QUI FORCE LA CONFIGURATION :
-    # On dit au script de démarrage de Presidio d'utiliser NOTRE fichier.
-    environment:
-      - PRESIDIO_CONF_FILE=/app/presidio_config/config.yaml
 
   presidio-anonymizer:
     image: mcr.microsoft.com/presidio-anonymizer:latest
