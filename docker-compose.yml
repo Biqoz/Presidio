@@ -5,20 +5,13 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.analyzer
-    container_name: presidio-analyzer
-    restart: unless-stopped
-    ports:
-      - "3000"
-    # Forcer l'utilisateur root pour éviter les problèmes
-    user: "0:0"
     environment:
       - PRESIDIO_ANALYZER_DEFAULT_LANGUAGE=fr
       - PYTHONPATH=/usr/bin/presidio-analyzer:/app
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - GUNICORN_CMD_ARGS="--log-level debug --error-logfile - --access-logfile - --capture-output"
+      - PYTHONUNBUFFERED=1
+    command: ["gunicorn", "--bind", "0.0.0.0:3000", "--workers", "1", "--log-level", "debug", "--timeout", "120", "presidio_analyzer.app:app"]
+
 
   presidio-anonymizer:
     image: mcr.microsoft.com/presidio-anonymizer:latest
