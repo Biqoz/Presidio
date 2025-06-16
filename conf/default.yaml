@@ -15,14 +15,13 @@ ner_model_configuration:
     - MISC
   confidence_threshold:
     default: 0.35
-    EMAIL_ADDRESS: 0.5
-    PHONE_NUMBER: 0.6
-    PERSON: 0.7
+    EMAIL_ADDRESS: 0.4
+    PHONE_NUMBER: 0.5
+    PERSON: 0.6
 
-# Configuration des reconnaisseurs
+# Configuration des reconnaisseurs - UTILISER SEULEMENT LES RECONNAISSEURS PAR DÉFAUT
 recognizer_registry:
   - default
-  - presidio_config.custom_recognizers
 
 # Liste des termes à ignorer (faux positifs)
 allow_list:
