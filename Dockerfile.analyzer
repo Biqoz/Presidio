@@ -28,11 +28,3 @@ COPY default.yaml presidio_analyzer/conf/default.yaml
 # Pour que 'custom_recognizers' soit un module de haut niveau directement dans le PYTHONPATH
 COPY custom_recognizers custom_recognizers
 
-# S'assurer que le répertoire de travail est bien dans le PYTHONPATH pour que Python
-# puisse trouver les modules "presidio_analyzer" et "custom_recognizers"
-# (Normalement WORKDIR est automatiquement ajouté au PYTHONPATH, mais on peut le rendre explicite)
-ENV PYTHONPATH=/usr/bin/presidio-analyzer:$PYTHONPATH
-
-# Commande de démarrage finale
-# Gunicorn doit pouvoir importer 'presidio_analyzer.app'
-CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:3000", "presidio_analyzer.app:app"]
