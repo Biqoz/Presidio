@@ -9,21 +9,27 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir \
     https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Copier et installer requirements.txt (qui contient maintenant gunicorn)
+# Copier et installer requirements.txt (qui contient maintenant gunicorn, pyyaml etc.)
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # Copier votre fichier default.yaml dans le répertoire de configuration de Presidio.
-COPY default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+# L'application Presidio s'attend à le trouver dans `presidio_analyzer/conf/`
+COPY default.yaml /usr/local/lib/python3.9/site-packages/presidio_analyzer/conf/default.yaml
 
 # Copier le dossier de vos recognizers Python (si vous avez choisi cette approche)
-COPY custom_recognizers /usr/bin/presidio-analyzer/custom_recognizers
+# Ils doivent être accessibles via le PYTHONPATH.
+COPY custom_recognizers /usr/local/lib/python3.9/site-packages/custom_recognizers
 
-# Définir le répertoire de travail
-WORKDIR /usr/bin/presidio-analyzer
+# Le WORKDIR n'est plus aussi critique si les chemins sont absolus dans CMD
+# WORKDIR /usr/bin/presidio-analyzer
+# ENV PYTHONPATH=/usr/bin/presidio-analyzer:$PYTHONPATH # plus nécessaire pour les custom_recognizers s'ils sont dans site-packages
 
-# Ajouter le dossier de vos recognizers au PYTHONPATH (si vous avez choisi cette approche)
-ENV PYTHONPATH=/usr/bin/presidio-analyzer:$PYTHONPATH
-
-# Commande de démarrage finale
-CMD ["gunicorn", "presidio_analyzer.app:app", "-w", "1", "-b", "0.0.0.0:3000"]
+# **** NOUVEAU CMD : Utiliser le point d'entrée de Presidio ****
+# Normalement, les packages Python fournissent un point d'entrée pour leur application.
+# Presidio en fournit un qui simplifie le lancement.
+CMD ["presidio-analyzer", "--host", "0.0.0.0", "--port", "3000"]
+# Alternative (si le point d'entrée n'est pas trouvé ou ne fonctionne pas):
+# CMD ["python", "-m", "presidio_analyzer.app", "--host", "0.0.0.0", "--port", "3000"]
+# Ou la version gunicorn si on est sûr des chemins:
+# CMD ["gunicorn", "presidio_analyzer.app:app", "-w", "1", "-b", "0.0.0.0:3000"]
