@@ -2,29 +2,31 @@ FROM mcr.microsoft.com/presidio-analyzer:latest
 
 USER root
 
-# Installer les dépendances système
+# Installer les dépendances système (comme curl, toujours utile)
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Installer le modèle spaCy français
+# Cette étape est spécifique et ne devrait pas interférer.
 RUN pip install --no-cache-dir \
     https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Copier et installer requirements.txt (qui contient gunicorn, pyyaml etc.)
+# Copier et installer votre requirements.txt MODIFIÉ (sans presidio-analyzer/anonymizer)
+# Il installera gunicorn, pyyaml, etc., SANS toucher à l'installation de base de Presidio.
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Définir le WORKDIR AVANT de copier les fichiers spécifiques à Presidio
-WORKDIR /usr/bin/presidio-analyzer
+# **** CHEMINS DE COPIE POUR LA CONFIGURATION ET RECOGNIZERS ****
+# Basé sur votre confirmation que /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml est le bon chemin.
+# Cela signifie que l'application est dans /usr/bin/presidio-analyzer/
 
-# Copier votre fichier default.yaml au bon endroit relatif au WORKDIR
+WORKDIR /usr/bin/presidio-analyzer # Assurez-vous que le WORKDIR est bien à la racine de l'application Presidio
+
+# Copier votre default.yaml dans le dossier 'conf' du package Presidio Analyzer
 COPY default.yaml presidio_analyzer/conf/default.yaml
 
-# Copier le dossier de vos recognizers Python au bon endroit relatif au WORKDIR
+# Copier le dossier de vos recognizers Python au niveau du WORKDIR pour qu'il soit dans le PYTHONPATH implicite.
 COPY custom_recognizers custom_recognizers
 
-# **** REMETTRE CETTE LIGNE ****
-# S'assurer que le répertoire de travail est bien dans le PYTHONPATH
-ENV PYTHONPATH=/usr/bin/presidio-analyzer:$PYTHONPATH
-
-# Commande de démarrage finale
-CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:3000", "presidio_analyzer.app:app"]
+# Pas besoin de définir un PYTHONPATH explicite si WORKDIR est correctement géré.
+# L'image de base de Presidio doit avoir un CMD ou ENTRYPOINT qui lance l'application correctement.
+# NOUS NE DÉFINISSONS PAS DE CMD DANS CE DOCKERFILE POUR LAISSER L'IMAGE DE BASE S'EN CHARGER.
