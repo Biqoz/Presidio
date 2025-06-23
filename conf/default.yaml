@@ -1,7 +1,6 @@
 # =====================================================================
-# CONFIGURATION PRESIDIO COMPLÈTE - RGPD FRANÇAIS/BELGE
+# CONFIGURATION PRESIDIO COMPLÈTE - RGPD FRANÇAIS/BELGE - v3 (Précision Max)
 # =====================================================================
-# Langues supportées par l'ensemble du moteur
 supported_languages: [en, fr]
 
 # 1. CONFIGURATION DU MOTEUR NLP
@@ -27,10 +26,9 @@ nlp_configuration:
           - WORK_OF_ART
         confidence_thresholds:
           DEFAULT_CONFIDENCE: 0.65
-          entities:
-            PERSON: 0.85
-            LOCATION: 0.75
-            ORGANIZATION: 0.7
+          PERSON: 0.85
+          LOCATION: 0.75
+          ORGANIZATION: 0.7
 
 # 2. CONFIGURATION DU REGISTRE DES DÉTECTEURS
 # =====================================================================
@@ -40,86 +38,100 @@ recognizer_registry:
   recognizers:
     - name: EmailRecognizer
       supported_language: fr
-      supported_entity: EMAIL_ADDRESS  # CORRECTION: entity_name -> supported_entity
-      patterns:
-        - name: Email Pattern
-          regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"
-          score: 1.0
+      supported_entity: EMAIL_ADDRESS
+      patterns: [{name: Email Pattern, regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b", score: 1.0}]
       context: ["email", "courriel", "mail"]
 
     - name: PhoneRecognizer
       supported_language: fr
-      supported_entity: PHONE_NUMBER  # CORRECTION: entity_name -> supported_entity
-      patterns:
-        - name: Phone Pattern (FR/BE/LUX)
-          regex: "\\b(?:(?:\\+|00)?(?:32|33|352)|0)\\s?[1-9](?:[\\s.-]?\\d{2}){3,4}\\b"
-          score: 0.8
+      supported_entity: PHONE_NUMBER
+      patterns: [{name: Phone Pattern (FR/BE/LUX), regex: "\\b(?:(?:\\+|00)?(?:32|33|352)|0)\\s?[1-9](?:[\\s.-]?\\d{2}){3,4}\\b", score: 0.8}]
       context: ["téléphone", "tel", "mobile", "gsm", "contact"]
 
     - name: IbanRecognizer
       supported_language: fr
-      supported_entity: IBAN  # CORRECTION: entity_name -> supported_entity
-      patterns:
-        - name: IBAN Pattern
-          regex: "\\b[A-Z]{2}[0-9]{2}\\s?(?:[A-Z0-9]{4}\\s?){2,7}[A-Z0-9]{1,4}\\b"
-          score: 0.95
+      supported_entity: IBAN
+      patterns: [{name: IBAN Pattern, regex: "\\b[A-Z]{2}[0-9]{2}\\s?(?:[A-Z0-9]{4}\\s?){2,7}[A-Z0-9]{1,4}\\b", score: 0.95}]
       context: ["iban", "compte", "bancaire"]
     
     - name: CreditCardRecognizer
       supported_language: fr
-      supported_entity: CREDIT_CARD_NUMBER  # CORRECTION: entity_name -> supported_entity
+      supported_entity: CREDIT_CARD_NUMBER
       patterns:
-        - name: Credit Card Pattern
-          regex: "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9]{2})[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11})\\b"
+        - name: Credit Card Pattern with spaces
+          regex: "\\b(?:4[0-9]{3}(?:\\s?[0-9]{4}){3}|5[1-5][0-9]{2}(?:\\s?[0-9]{4}){3}|6(?:011|5[0-9]{2})(?:\\s?[0-9]{4}){3}|3[47][0-9]{2}(?:\\s?[0-9]{6})(?:\\s?[0-9]{5})|3(?:0[0-5]|[68][0-9])(?:\\s?[0-9]{4})(?:\\s?[0-9]{4})(?:\\s?[0-9]{3})|(?:2131|1800|35\\d{3})(?:\\s?\\d{4}){2}\\d{3})\\b"
           score: 0.9
       context: ["carte bancaire", "visa", "mastercard", "amex"]
 
     - name: MoneyRecognizer
       supported_language: fr
-      supported_entity: MONEY  # CORRECTION: entity_name -> supported_entity
-      patterns:
-        - name: Money Pattern EUR
-          regex: "(?:EUR|€)\\s*\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?|\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?\\s*(?:EUR|€)"
-          score: 0.85
+      supported_entity: MONEY
+      patterns: [{name: Money Pattern EUR, regex: "(?:EUR|€)\\s*\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?|\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?\\s*(?:EUR|€)", score: 0.85}]
     
     - name: BelgianNRNRecognizer
       supported_language: fr
-      supported_entity: BE_NATIONAL_REGISTER_NUMBER  # CORRECTION: entity_name -> supported_entity
-      patterns:
-        - name: NRN Pattern
-          regex: "\\b[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}-[0-9]{3}\\.[0-9]{2}\\b"
-          score: 1.0
+      supported_entity: BE_NATIONAL_REGISTER_NUMBER
+      patterns: [{name: NRN Pattern, regex: "\\b[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}-[0-9]{3}\\.[0-9]{2}\\b", score: 1.0}]
       context: ["registre national", "nrn", "niss"]
 
     - name: BelgianEnterpriseRecognizer
       supported_language: fr
-      supported_entity: BE_ENTERPRISE_NUMBER  # CORRECTION: entity_name -> supported_entity
-      patterns:
-        - name: BE Enterprise Number
-          regex: "\\bBE\\s?0\\d{3}[\\.\\s]?\\d{3}[\\.\\s]?\\d{3}\\b"
-          score: 0.95
+      supported_entity: BE_ENTERPRISE_NUMBER
+      patterns: [{name: BE Enterprise Number, regex: "\\bBE\\s?0\\d{3}[\\.\\s]?\\d{3}[\\.\\s]?\\d{3}\\b", score: 0.95}]
       context: ["numéro d'entreprise", "btw", "tva", "BCE", "KBO"]
 
     - name: FrenchINSEERecognizer
       supported_language: fr
-      supported_entity: FR_SOCIAL_SECURITY_NUMBER  # CORRECTION: entity_name -> supported_entity
-      patterns:
-        - name: INSEE Pattern
-          regex: "\\b[12][\\s]?[0-9]{2}[\\s]?(?:0[1-9]|1[0-2])[\\s]?(?:2[ABab]|[0-9]{2})[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{2}\\b"
-          score: 0.95
+      supported_entity: FR_SOCIAL_SECURITY_NUMBER
+      patterns: [{name: INSEE Pattern, regex: "\\b[12][\\s]?[0-9]{2}[\\s]?(?:0[1-9]|1[0-2])[\\s]?(?:2[ABab]|[0-9]{2})[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{2}\\b", score: 0.95}]
       context: ["sécurité sociale", "insee", "nir"]
 
     - name: FrenchSIRENSIRETRecognizer
       supported_language: fr
-      supported_entity: FR_SIREN_SIRET  # CORRECTION: entity_name -> supported_entity
+      supported_entity: FR_SIREN_SIRET
       patterns:
-        - name: SIRET Pattern
-          regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{5}\\b"
-          score: 0.9
-        - name: SIREN Pattern
-          regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}\\b"
-          score: 0.85
+        - {name: SIRET Pattern, regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{5}\\b", score: 0.9}
+        - {name: SIREN Pattern, regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}\\b", score: 0.85}
       context: ["siren", "siret"]
+
+    - name: BelgianIDCardRecognizer
+      supported_language: fr
+      supported_entity: BE_ID_CARD_NUMBER
+      patterns: [{name: "Belgian ID Card Number", regex: "\\b\\d{3}-\\d{7}-\\d{2}\\b", score: 1.0}]
+      context: ["carte d'identité", "eid"]
+
+    - name: BelgianLicensePlateRecognizer
+      supported_language: fr
+      supported_entity: BE_LICENSE_PLATE
+      patterns: [{name: "Belgian License Plate", regex: "\\b(?:[12]-\\w{3}-\\d{3}|\\w{3}-\\d{3})\\b", score: 0.8}]
+      context: ["plaque", "immatriculation"]
+
+    - name: BICRecognizer
+      supported_language: fr
+      supported_entity: BE_BIC
+      patterns:
+        - name: BIC/SWIFT Code
+          regex: "\\b[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\\b"
+          score: 1.0
+      context: ["bic", "swift"]
+
+    - name: JobTitleRecognizer
+      supported_language: fr
+      supported_entity: JOB_TITLE
+      patterns:
+        - name: Common Job Titles
+          regex: "(?i)\\b(Gérant|Directeur|Directrice|Président|CEO|CFO|CTO|Manager|Responsable|Chef de projet)\\b"
+          score: 0.8
+      context: ["représentée par", "fonction", "poste", "attention de"]
+
+    - name: CompanyFormRecognizer
+      supported_language: fr
+      supported_entity: LEGAL_FORM
+      patterns:
+        - name: Common Legal Forms
+          regex: "\\b(SPRL|SA|SCS|SNC|SCRI|SCA|SRL|SC)\\b"
+          score: 0.9
+      context: ["société", "entreprise"]
 
 # 3. LISTE D'EXCLUSION
 # =====================================================================
@@ -196,6 +208,11 @@ anonymizer_config:
     BE_ENTERPRISE_NUMBER: replace
     FR_SOCIAL_SECURITY_NUMBER: replace
     FR_SIREN_SIRET: replace
+    BE_ID_CARD_NUMBER: replace
+    BE_LICENSE_PLATE: replace
+    BE_BIC: replace
+    JOB_TITLE: replace
+    LEGAL_FORM: replace
   
   replacements:
     PERSON: "<PERSONNE>"
@@ -213,3 +230,8 @@ anonymizer_config:
     BE_ENTERPRISE_NUMBER: "<NUM_ENTREPRISE_BE>"
     FR_SOCIAL_SECURITY_NUMBER: "<NUM_SECU_FR>"
     FR_SIREN_SIRET: "<SIREN_SIRET_FR>"
+    BE_ID_CARD_NUMBER: "<CARTE_ID_BE>"
+    BE_LICENSE_PLATE: "<PLAQUE_BE>"
+    BE_BIC: "<CODE_BIC>"
+    JOB_TITLE: "<FONCTION>"
+    LEGAL_FORM: "<FORME_JURIDIQUE>"
