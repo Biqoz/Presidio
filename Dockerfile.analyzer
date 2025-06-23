@@ -12,7 +12,6 @@ RUN pip install --no-cache-dir \
 
 COPY default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
 
-COPY custom_recognizers /usr/bin/presidio-analyzer/custom_recognizers
 
 # Définir le répertoire de travail
 WORKDIR /usr/bin/presidio-analyzer
