@@ -4,7 +4,6 @@
 
 # 1. CONFIGURATION DU MOTEUR NLP (Natural Language Processing)
 # =====================================================================
-# On utilise spaCy pour l'anglais et le français.
 nlp_engine_name: spacy
 supported_languages: [en, fr]
 models:
@@ -15,14 +14,11 @@ models:
 
 # Configuration fine du modèle NLP pour réduire les faux positifs
 ner_model_configuration:
-  # On demande au modèle d'être plus sûr de lui avant de labelliser une entité.
   confidence_threshold:
-    default: 0.65  # Seuil par défaut pour toutes les entités
-    PERSON: 0.85     # Très strict pour les noms de personnes
-    LOCATION: 0.75   # Strict pour les lieux
-    ORGANIZATION: 0.7 # Un peu moins strict pour les organisations
-  
-  # On ignore les catégories d'entités spaCy qui sont rarement des PII
+    default: 0.65
+    PERSON: 0.85
+    LOCATION: 0.75
+    ORGANIZATION: 0.7
   labels_to_ignore:
     - MISC
     - CARDINAL
@@ -37,9 +33,7 @@ ner_model_configuration:
 
 # 2. DÉFINITION DES DÉTECTEURS (RECOGNIZERS) PERSONNALISÉS
 # =====================================================================
-# Cette section définit tous nos détecteurs personnalisés basés sur des regex.
 recognizers:
-  # -- Données d'identification standards --
   - name: EmailRecognizer
     entity_name: EMAIL_ADDRESS
     supported_language: fr
@@ -58,7 +52,6 @@ recognizers:
         score: 0.8
     context: ["téléphone", "tel", "mobile", "gsm", "contact"]
 
-  # -- Données financières --
   - name: IbanRecognizer
     entity_name: IBAN
     supported_language: fr
@@ -85,7 +78,6 @@ recognizers:
         regex: "(?:EUR|€)\\s*\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?|\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?\\s*(?:EUR|€)"
         score: 0.85
   
-  # -- Données d'identification belges --
   - name: BelgianNRNRecognizer
     entity_name: BE_NATIONAL_REGISTER_NUMBER
     supported_language: fr
@@ -104,7 +96,6 @@ recognizers:
         score: 0.95
     context: ["numéro d'entreprise", "btw", "tva", "BCE", "KBO"]
 
-  # -- Données d'identification françaises --
   - name: FrenchINSEERecognizer
     entity_name: FR_SOCIAL_SECURITY_NUMBER
     supported_language: fr
@@ -128,10 +119,8 @@ recognizers:
 
 # 3. ACTIVATION DES DÉTECTEURS
 # =====================================================================
-# C'est la liste de tous les détecteurs que Presidio doit charger et utiliser.
 recognizer_registry:
-  - default # Garder pour les détecteurs intégrés de Presidio (URL, IP_ADDRESS, etc.)
-  # Activation de nos détecteurs personnalisés définis ci-dessus
+  - default
   - EmailRecognizer
   - PhoneRecognizer
   - IbanRecognizer
@@ -144,95 +133,47 @@ recognizer_registry:
 
 # 4. LISTE D'EXCLUSION (ALLOW LIST)
 # =====================================================================
-# C'est une étape cruciale pour éviter que des termes métiers soient mal labellisés.
 allow_list:
-  # Termes contractuels et juridiques
-  - text: Contrat
-    type: LOCATION
-  - text: contrat
-    type: LOCATION
-  - text: Document
-    type: LOCATION
-  - text: document
-    type: LOCATION
-  - text: Société
-    type: PERSON
-  - text: Investisseur
-    type: PERSON
-  - text: Montant
-    type: LOCATION
-  - text: Prêt
-    type: LOCATION
-  - text: Intérêt
-    type: LOCATION
-  - text: Partie
-    type: LOCATION
-  - text: Parties
-    type: PERSON
-  - text: Annexe
-    type: LOCATION
-  - text: Remboursement
-    type: LOCATION
-  - text: Conversion
-    type: LOCATION
-  - text: Financement
-    type: LOCATION
-  - text: Sortie
-    type: LOCATION
-  - text: "Juste Valeur Marchande"
-    type: PERSON
-  - text: Échéance
-    type: LOCATION
-  - text: Clause
-    type: LOCATION
-  - text: Clauses
-    type: LOCATION
-  - text: Principe
-    type: LOCATION
-  - text: Coûts
-    type: PERSON
-  - text: Notifications
-    type: LOCATION
-  - text: Article
-    type: LOCATION
-  - text: Paragraphe
-    type: LOCATION
-  - text: Directeur
-    type: LOCATION
-  - text: Gérant
-    type: LOCATION
-  - text: Président
-    type: LOCATION
-  - text: DocuSign
-    type: PERSON
-  - text: SPRL
-    type: ORG
-  - text: SA
-    type: ORG
-  - text: Loi
-    type: LOCATION
-  - text: Code
-    type: LOCATION
-  - text: Règlement
-    type: LOCATION
-  - text: Décret
-    type: LOCATION
-  - text: Arrêté
-    type: LOCATION
-  # Termes financiers
-  - text: Euro
-    type: LOCATION
-  - text: EUR
-    type: LOCATION
-  - text: Euros
-    type: LOCATION
-  - text: Taux
-    type: LOCATION
-  - text: Valeur
-    type: LOCATION
-  - text: Prix
-    type: LOCATION
-  # Mois de l'année
+  - Contrat
+  - Document
+  - Société
+  - Investisseur
+  - Montant
+  - Prêt
+  - Intérêt
+  - Partie
+  - Parties
+  - Annexe
+  - Remboursement
+  - Conversion
+  - Financement
+  - Sortie
+  - "Juste Valeur Marchande"
+  - Échéance
+  - Clause
+  - Clauses
+  - Principe
+  - Coûts
+  - Notifications
+  - Article
+  - Paragraphe
+  - Directeur
+  - Gérant
+  - Président
+  - DocuSign
+  - SPRL
+  - SA
+  - Loi
+  - Code
+  - Règlement
+  - Décret
+  - Arrêté
+  - Euro
+  - EUR
+  - Euros
+  - Taux
+  - Valeur
+  - Prix
   - Janvier
   - Février
   - Mars
@@ -248,31 +189,25 @@ allow_list:
 
 # 5. CONFIGURATION DES TRANSFORMATIONS D'ANONYMISATION
 # =====================================================================
-# Cette section est lue par le service Anonymizer pour savoir comment remplacer les PII.
 anonymizer_config:
-  # Remplacement par défaut pour chaque type d'entité.
   default_anonymizers:
-    # Entités NLP standard
     PERSON: replace
     LOCATION: replace
     ORGANIZATION: replace
     DATE_TIME: replace
-    # Entités Presidio standard
     CREDIT_CARD_NUMBER: replace
     EMAIL_ADDRESS: replace
-    IBAN_CODE: replace # Le recognizer par défaut utilise IBAN_CODE
+    IBAN_CODE: replace
     IP_ADDRESS: replace
     PHONE_NUMBER: replace
     URL: replace
-    # Entités personnalisées
-    IBAN: replace # Notre recognizer custom
+    IBAN: replace
     MONEY: replace
     BE_NATIONAL_REGISTER_NUMBER: replace
     BE_ENTERPRISE_NUMBER: replace
     FR_SOCIAL_SECURITY_NUMBER: replace
     FR_SIREN_SIRET: replace
   
-  # Valeurs de remplacement personnalisées
   replacements:
     PERSON: "<PERSONNE>"
     LOCATION: "<LIEU>"
@@ -281,7 +216,7 @@ anonymizer_config:
     CREDIT_CARD_NUMBER: "<NUMERO_CARTE_BANCAIRE>"
     EMAIL_ADDRESS: "<EMAIL>"
     IBAN_CODE: "<IBAN>"
-    IBAN: "<IBAN>" # Pour notre recognizer custom
+    IBAN: "<IBAN>"
     IP_ADDRESS: "<ADRESSE_IP>"
     PHONE_NUMBER: "<TELEPHONE>"
     URL: "<URL>"
