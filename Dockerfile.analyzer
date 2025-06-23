@@ -13,16 +13,26 @@ RUN pip install --no-cache-dir \
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Copier votre fichier default.yaml dans le répertoire de configuration de Presidio.
-# L'application Presidio s'attend à le trouver dans `presidio_analyzer/conf/`
-COPY default.yaml /usr/local/lib/python3.9/site-packages/presidio_analyzer/conf/default.yaml
+# **** CORRECTION DES CHEMINS DE COPIE ET WORKDIR/PYTHONPATH ****
 
-# Copier le dossier de vos recognizers Python (si vous avez choisi cette approche)
-# Ils doivent être accessibles via le PYTHONPATH.
-COPY custom_recognizers /usr/local/lib/python3.9/site-packages/custom_recognizers
+# Définir le WORKDIR AVANT de copier les fichiers spécifiques à Presidio
+# C'est important pour les chemins relatifs et pour le PYTHONPATH implicite.
+WORKDIR /usr/bin/presidio-analyzer
 
+# Copier votre fichier default.yaml au bon endroit relatif au WORKDIR
+# Si le chemin absolu est /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+# et que WORKDIR est /usr/bin/presidio-analyzer, alors le chemin relatif est presidio_analyzer/conf/default.yaml
+COPY default.yaml presidio_analyzer/conf/default.yaml
 
-# **** NOUVELLE CMD : Utiliser 'python -m' pour lancer l'application Flask de Presidio ****
-# Ceci est la méthode la plus fiable pour lancer une application Python installée via pip.
-# Gunicorn est déjà installé par requirements.txt, donc nous l'utilisons pour servir l'application Flask.
+# Copier le dossier de vos recognizers Python au bon endroit relatif au WORKDIR
+# Pour que 'custom_recognizers' soit un module de haut niveau directement dans le PYTHONPATH
+COPY custom_recognizers custom_recognizers
+
+# S'assurer que le répertoire de travail est bien dans le PYTHONPATH pour que Python
+# puisse trouver les modules "presidio_analyzer" et "custom_recognizers"
+# (Normalement WORKDIR est automatiquement ajouté au PYTHONPATH, mais on peut le rendre explicite)
+ENV PYTHONPATH=/usr/bin/presidio-analyzer:$PYTHONPATH
+
+# Commande de démarrage finale
+# Gunicorn doit pouvoir importer 'presidio_analyzer.app'
 CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:3000", "presidio_analyzer.app:app"]
