@@ -40,9 +40,14 @@ try:
     
     logger.info("Creating and populating recognizer registry from config file...")
     registry = RecognizerRegistry()
+    
+    # === CORRECTION DÉFINITIVE : ASSURER UN REGISTRE PROPRE ===
+    logger.info("Removing any default recognizers to ensure a clean slate...")
+    registry.remove_all_recognizers()
+    
     supported_languages = config.get("supported_languages", ["en"])
 
-    # Étape A: Construire les détecteurs personnalisés
+    # Construire les détecteurs personnalisés
     custom_recognizers = {}
     for recognizer_conf in config.get("recognizers", []):
         patterns = [Pattern(name=p['name'], regex=p['regex'], score=p['score']) for p in recognizer_conf['patterns']]
@@ -54,37 +59,30 @@ try:
             context=recognizer_conf.get('context')
         )
     
-    # Étape B: Activer les détecteurs listés dans recognizer_registry
+    # Activer les détecteurs listés dans la configuration
     for recognizer_name in config.get("recognizer_registry", []):
         if recognizer_name in custom_recognizers:
             registry.add_recognizer(custom_recognizers[recognizer_name])
-            logger.info(f"Loaded CUSTOM recognizer from list: {recognizer_name}")
+            logger.info(f"Loaded CUSTOM recognizer: {recognizer_name}")
         
         elif recognizer_name in PREDEFINED_RECOGNIZERS_MAP:
             recognizer_class = PREDEFINED_RECOGNIZERS_MAP[recognizer_name]
             for lang in supported_languages:
-                instance = recognizer_class(supported_language=lang)
-                registry.add_recognizer(instance)
-            logger.info(f"Loaded PREDEFINED recognizer '{recognizer_name}' for languages: {supported_languages}")
+                # Le SpacyRecognizer est un cas spécial, il n'a pas de paramètre de langue
+                if recognizer_class == SpacyRecognizer:
+                    if 'SpacyRecognizer_added' not in locals(): # Pour ne l'ajouter qu'une seule fois
+                       registry.add_recognizer(recognizer_class(supported_entities=config.get("spacy_entities", [])))
+                       logger.info(f"Loaded PREDEFINED singleton recognizer: {recognizer_name}")
+                       SpacyRecognizer_added = True
+                else:
+                    instance = recognizer_class(supported_language=lang)
+                    registry.add_recognizer(instance)
+            if recognizer_class != SpacyRecognizer:
+                logger.info(f"Loaded PREDEFINED recognizer '{recognizer_name}' for languages: {supported_languages}")
+
         else:
             logger.warning(f"Recognizer '{recognizer_name}' from registry list was not found.")
 
-    # === DÉBUT DU BLOC DE DIAGNOSTIC ===
-    logger.info("=================================================================")
-    logger.info("DIAGNOSTIC: FINAL REGISTRY STATE BEFORE ANALYZER ENGINE CREATION")
-    logger.info(f"Expected languages: {supported_languages}")
-    
-    # On demande au registre lui-même quelles langues il pense supporter
-    actual_registry_langs = registry.supported_languages
-    logger.info(f"Actual languages reported by registry.supported_languages: {actual_registry_langs}")
-    
-    logger.info("--- Detailed Recognizer List ---")
-    if not registry.recognizers:
-        logger.info("Registry is empty.")
-    for i, rec in enumerate(registry.recognizers):
-        logger.info(f"  {i+1}: Recognizer='{rec.name}', Supported Languages={rec.supported_languages}, Entities={rec.supported_entities}")
-    logger.info("=================================================================")
-    # === FIN DU BLOC DE DIAGNOSTIC ===
 
     logger.info("Initializing AnalyzerEngine with custom components...")
     analyzer = AnalyzerEngine(
