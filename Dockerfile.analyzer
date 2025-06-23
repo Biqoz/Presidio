@@ -11,7 +11,3 @@ RUN pip install --no-cache-dir \
 
 
 COPY default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
-
-
-# Définir le répertoire de travail
-WORKDIR /usr/bin/presidio-analyzer
