@@ -1,44 +1,29 @@
 #!/bin/bash
 set -e
 
-echo "Running custom entrypoint.sh..."
+echo "Running debug entrypoint.sh..."
 
-# Vérifier si default.yaml est lisible (débogage)
-echo "Checking default.yaml path and content:"
-ls -l /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
-cat /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+# Trouver où le package presidio-analyzer est réellement installé par pip
+echo "--- Finding presidio-analyzer package location ---"
+pip show presidio-analyzer
 
-# Vérifier si custom_recognizers est présent (débogage)
-echo "Checking custom_recognizers path:"
-ls -l /usr/bin/presidio-analyzer/custom_recognizers
+# Lister le contenu du répertoire 'Location' trouvé ci-dessus
+# Vous devrez copier-coller le chemin de 'Location:' dans la commande 'ls' manuellement si nécessaire
+# Mais on peut aussi essayer de le faire dynamiquement
+LOCATION=$(pip show presidio-analyzer | grep Location | awk '{print $2}')
+echo "Presidio-analyzer is at: $LOCATION"
 
-# Vérifier PYTHONPATH (débogage)
-echo "Current PYTHONPATH: $PYTHONPATH"
-export PYTHONPATH="/usr/bin/presidio-analyzer:$PYTHONPATH"
-echo "Updated PYTHONPATH: $PYTHONPATH"
+echo "--- Listing files in the presidio-analyzer package ---"
+ls -l "$LOCATION/presidio_analyzer"
 
-# Exécuter le ENTRYPOINT/CMD original de l'image de base.
-# C'est la commande magique qui lance réellement Presidio.
-# Pour l'image 'mcr.microsoft.com/presidio-analyzer:latest', son ENTRYPOINT est probablement quelque chose comme:
-# CMD ["python", "-m", "presidio_analyzer.app", "--host", "0.0.0.0", "--port", "3000"]
-# Ou peut-être un script shell interne qui finit par lancer gunicorn.
-# La plus simple est de supposer qu'elle a un CMD final qui démarre Gunicorn.
+echo "--- Checking for app.py in the presidio-analyzer package ---"
+ls -l "$LOCATION/presidio_analyzer/app.py"
 
-# Pour s'assurer que l'image démarre comme elle le ferait normalement,
-# nous allons appeler la CMD par défaut de l'image de base.
-# Cela peut varier, mais souvent c'est le CMD spécifié dans le Dockerfile de l'image de base.
-# Pour mcr.microsoft.com/presidio-analyzer, c'est probablement gunicorn comme nous l'avons utilisé.
-# Si cela ne marche pas, nous devrons essayer 'exec "$@"' pour passer le ENTRYPOINT/CMD original.
+echo "--- Listing content of 'conf' directory ---"
+ls -l "$LOCATION/presidio_analyzer/conf/"
 
-# Version 1 : Relancer gunicorn manuellement (si l'image n'a pas un ENTRYPOINT compliqué)
-exec gunicorn -w 1 -b 0.0.0.0:3000 presidio_analyzer.app:app
-
-# Version 2 : Si la version 1 échoue, et si l'image de base a un ENTRYPOINT qui attend d'autres commandes.
-# exec "$@"
-# Ceci exécuterait la CMD qui aurait été définie dans le Dockerfile de l'image de base.
-# Si votre Dockerfile.analyzer ne contient pas de CMD, alors "$@" serait vide.
-# Dans ce cas, il faudrait remettre un CMD dans votre Dockerfile.analyzer:
-# CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:3000", "presidio_analyzer.app:app"]
-# Et dans entrypoint.sh: exec "$@"
-
-# Commençons par la Version 1 car c'est la plus simple et la plus directe pour votre cas.
+echo "Debug session started. The container will stay alive. Connect via Coolify terminal."
+# Garder le conteneur en vie indéfiniment
+while true; do
+  sleep 3600;
+done
