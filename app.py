@@ -5,100 +5,74 @@ from flask import Flask, request, jsonify, make_response
 
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry, PatternRecognizer, Pattern
 from presidio_analyzer.nlp_engine import NlpEngineProvider
-from presidio_analyzer.predefined_recognizers import (
-    CreditCardRecognizer, CryptoRecognizer, DateRecognizer, IpRecognizer,
-    MedicalLicenseRecognizer, UrlRecognizer, SpacyRecognizer
-)
+from presidio_analyzer.predefined_recognizers import SpacyRecognizer
 
+# Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Initialisation de l'application Flask
 app = Flask(__name__)
 
-PREDEFINED_RECOGNIZERS_MAP = {
-    "SpacyRecognizer": SpacyRecognizer,
-    "CreditCardRecognizer": CreditCardRecognizer,
-    "CryptoRecognizer": CryptoRecognizer,
-    "DateRecognizer": DateRecognizer,
-    "IpRecognizer": IpRecognizer,
-    "MedicalLicenseRecognizer": MedicalLicenseRecognizer,
-    "UrlRecognizer": UrlRecognizer,
-}
-
+# --- Initialisation Globale de l'Analyseur ---
 analyzer = None
 try:
     logger.info("--- Presidio Analyzer Service Starting ---")
     
+    # 1. Charger la configuration depuis le fichier YAML
     CONFIG_FILE_PATH = os.environ.get("PRESIDIO_ANALYZER_CONFIG_FILE", "conf/default.yaml")
     logger.info(f"Loading configuration from: {CONFIG_FILE_PATH}")
     with open(CONFIG_FILE_PATH, 'r', encoding='utf-8') as f:
         config = yaml.safe_load(f)
     logger.info("Configuration file loaded successfully.")
 
+    # 2. Créer le fournisseur de moteur NLP
     logger.info("Creating NLP engine provider...")
     provider = NlpEngineProvider(nlp_configuration=config)
     
-    logger.info("Creating and populating recognizer registry from config file...")
+    # 3. Créer un registre de recognizers VIDE
+    logger.info("Creating a clean RecognizerRegistry...")
     registry = RecognizerRegistry()
     
-    # === CORRECTION DÉFINITIVE : ASSURER UN REGISTRE PROPRE ===
-    logger.info("Removing any default recognizers to ensure a clean slate...")
-    registry.remove_all_recognizers()
-    
-    supported_languages = config.get("supported_languages", ["en"])
-
-    # Construire les détecteurs personnalisés
-    custom_recognizers = {}
-    for recognizer_conf in config.get("recognizers", []):
+    # 4. Charger les recognizers personnalisés (définis sous la clé 'recognizers')
+    logger.info("Loading custom recognizers from YAML...")
+    custom_recognizers_conf = config.get("recognizers", [])
+    for recognizer_conf in custom_recognizers_conf:
         patterns = [Pattern(name=p['name'], regex=p['regex'], score=p['score']) for p in recognizer_conf['patterns']]
-        custom_recognizers[recognizer_conf['name']] = PatternRecognizer(
+        custom_recognizer = PatternRecognizer(
             supported_entity=recognizer_conf['entity_name'],
             name=recognizer_conf['name'],
             supported_language=recognizer_conf['supported_language'],
             patterns=patterns,
             context=recognizer_conf.get('context')
         )
-    
-    # Activer les détecteurs listés dans la configuration
-    for recognizer_name in config.get("recognizer_registry", []):
-        if recognizer_name in custom_recognizers:
-            registry.add_recognizer(custom_recognizers[recognizer_name])
-            logger.info(f"Loaded CUSTOM recognizer: {recognizer_name}")
-        
-        elif recognizer_name in PREDEFINED_RECOGNIZERS_MAP:
-            recognizer_class = PREDEFINED_RECOGNIZERS_MAP[recognizer_name]
-            for lang in supported_languages:
-                # Le SpacyRecognizer est un cas spécial, il n'a pas de paramètre de langue
-                if recognizer_class == SpacyRecognizer:
-                    if 'SpacyRecognizer_added' not in locals(): # Pour ne l'ajouter qu'une seule fois
-                       registry.add_recognizer(recognizer_class(supported_entities=config.get("spacy_entities", [])))
-                       logger.info(f"Loaded PREDEFINED singleton recognizer: {recognizer_name}")
-                       SpacyRecognizer_added = True
-                else:
-                    instance = recognizer_class(supported_language=lang)
-                    registry.add_recognizer(instance)
-            if recognizer_class != SpacyRecognizer:
-                logger.info(f"Loaded PREDEFINED recognizer '{recognizer_name}' for languages: {supported_languages}")
+        # On ajoute UNIQUEMENT les détecteurs customs définis pour le français
+        if recognizer_conf['supported_language'] == 'fr':
+            registry.add_recognizer(custom_recognizer)
+            logger.info(f"Loaded and registered custom recognizer: {custom_recognizer.name}")
 
-        else:
-            logger.warning(f"Recognizer '{recognizer_name}' from registry list was not found.")
+    # 5. Ajouter le SpacyRecognizer, qui est un cas spécial pour les entités de base
+    registry.add_recognizer(SpacyRecognizer(supported_language="en"))
+    registry.add_recognizer(SpacyRecognizer(supported_language="fr"))
+    logger.info("Registered SpacyRecognizer for 'en' and 'fr'.")
 
-
+    # 6. Créer l'AnalyzerEngine
     logger.info("Initializing AnalyzerEngine with custom components...")
     analyzer = AnalyzerEngine(
         nlp_engine=provider.create_engine(),
         registry=registry,
-        supported_languages=supported_languages
+        supported_languages=config.get("supported_languages", ["en", "fr"])
     )
     analyzer.set_allow_list(config.get("allow_list", []))
 
     logger.info("--- Presidio Analyzer Service Ready ---")
+    logger.info(f"Final supported languages in registry: {registry.supported_languages}")
 
 except Exception as e:
     logger.exception("FATAL: Error during AnalyzerEngine initialization.")
     analyzer = None 
 
-# Le reste du fichier Flask est identique
+# Le reste du fichier Flask reste identique...
 @app.route('/analyze', methods=['POST'])
 def analyze_text():
     if not analyzer: return jsonify({"error": "Analyzer engine is not available."}), 500
