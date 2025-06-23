@@ -4,15 +4,21 @@ FROM python:3.9-slim-bookworm
 # Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
+# **** AJOUT IMPORTANT : Installer les dépendances de compilation ****
+# build-essential contient gcc, g++, make, etc.
+# python3-dev contient les en-têtes nécessaires pour compiler des extensions Python.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copier tous les fichiers du projet (app.py, requirements.txt, conf/, etc.) dans le WORKDIR
 COPY . /app/
 
 # Installer les dépendances Python listées dans requirements.txt
-# Cela installera gunicorn, flask, presidio-analyzer, spacy, etc. dans un environnement propre.
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Télécharger et installer le modèle de langue français pour spaCy
-# On utilise la commande recommandée par spaCy
 RUN python -m spacy download fr_core_news_sm
 
 # Définir la variable d'environnement pour que Presidio trouve notre fichier de configuration
@@ -22,5 +28,4 @@ ENV PRESIDIO_ANALYZER_CONFIG_FILE=/app/conf/default.yaml
 EXPOSE 5001
 
 # Commande finale pour lancer l'application avec Gunicorn
-# Gunicorn va servir notre fichier app.py (et l'instance 'app' à l'intérieur)
 CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:5001", "app:app"]
