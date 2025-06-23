@@ -2,5 +2,27 @@ FROM mcr.microsoft.com/presidio-analyzer:latest
 
 USER root
 
+# Installer les dépendances système
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-CMD ["bash"]
+# Installer le modèle spaCy français
+RUN pip install --no-cache-dir \
+    https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
+
+# Copier et installer requirements.txt (qui contient maintenant gunicorn, pyyaml etc.)
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+# Copier votre fichier default.yaml dans le répertoire de configuration de Presidio.
+# L'application Presidio s'attend à le trouver dans `presidio_analyzer/conf/`
+COPY default.yaml /usr/local/lib/python3.9/site-packages/presidio_analyzer/conf/default.yaml
+
+# Copier le dossier de vos recognizers Python (si vous avez choisi cette approche)
+# Ils doivent être accessibles via le PYTHONPATH.
+COPY custom_recognizers /usr/local/lib/python3.9/site-packages/custom_recognizers
+
+
+# **** NOUVELLE CMD : Utiliser 'python -m' pour lancer l'application Flask de Presidio ****
+# Ceci est la méthode la plus fiable pour lancer une application Python installée via pip.
+# Gunicorn est déjà installé par requirements.txt, donc nous l'utilisons pour servir l'application Flask.
+CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:3000", "presidio_analyzer.app:app"]
