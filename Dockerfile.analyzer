@@ -12,4 +12,4 @@ RUN pip install --no-cache-dir \
 COPY requirements.txt /tmp/
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-COPY default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+COPY conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
