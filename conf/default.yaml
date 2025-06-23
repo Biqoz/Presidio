@@ -11,25 +11,25 @@ models:
     model_name: en_core_web_lg
   - lang_code: fr
     model_name: fr_core_news_sm
-
-# Configuration fine du modèle NLP pour réduire les faux positifs
-ner_model_configuration:
-  confidence_threshold:
-    default: 0.65
-    PERSON: 0.85
-    LOCATION: 0.75
-    ORGANIZATION: 0.7
-  labels_to_ignore:
-    - MISC
-    - CARDINAL
-    - EVENT
-    - LANGUAGE
-    - LAW
-    - ORDINAL
-    - PERCENT
-    - PRODUCT
-    - QUANTITY
-    - WORK_OF_ART
+    # Configuration fine du modèle NLP pour réduire les faux positifs
+    ner_model_configuration:
+      labels_to_ignore:
+        - MISC
+        - CARDINAL
+        - EVENT
+        - LANGUAGE
+        - LAW
+        - ORDINAL
+        - PERCENT
+        - PRODUCT
+        - QUANTITY
+        - WORK_OF_ART
+      confidence_thresholds:
+        DEFAULT_CONFIDENCE: 0.65
+        entities:
+          PERSON: 0.85
+          LOCATION: 0.75
+          ORGANIZATION: 0.7
 
 # 2. DÉFINITION DES DÉTECTEURS (RECOGNIZERS) PERSONNALISÉS
 # =====================================================================
@@ -119,12 +119,21 @@ recognizers:
 
 # 3. ACTIVATION DES DÉTECTEURS
 # =====================================================================
+# Remplacer 'default' par la liste explicite pour éviter les warnings
 recognizer_registry:
-  - default
-  - EmailRecognizer
-  - PhoneRecognizer
-  - IbanRecognizer
+  # - default # Remplacé par une liste explicite ci-dessous
+  # Détecteurs par défaut pour 'en' et 'fr' que nous voulons garder
+  - SpacyRecognizer
   - CreditCardRecognizer
+  - CryptoRecognizer
+  - DateRecognizer
+  - EmailRecognizer
+  - IbanRecognizer
+  - IpRecognizer
+  - MedicalLicenseRecognizer
+  - PhoneRecognizer
+  - UrlRecognizer
+  # Nos détecteurs personnalisés
   - MoneyRecognizer
   - BelgianNRNRecognizer
   - BelgianEnterpriseRecognizer
@@ -133,6 +142,7 @@ recognizer_registry:
 
 # 4. LISTE D'EXCLUSION (ALLOW LIST)
 # =====================================================================
+# ... (votre liste est correcte) ...
 allow_list:
   - Contrat
   - Document
@@ -197,7 +207,7 @@ anonymizer_config:
     DATE_TIME: replace
     CREDIT_CARD_NUMBER: replace
     EMAIL_ADDRESS: replace
-    IBAN_CODE: replace
+    # IBAN_CODE: replace # <-- Incohérent, le nom de l'entité est IBAN
     IP_ADDRESS: replace
     PHONE_NUMBER: replace
     URL: replace
@@ -215,7 +225,7 @@ anonymizer_config:
     DATE_TIME: "<DATE>"
     CREDIT_CARD_NUMBER: "<NUMERO_CARTE_BANCAIRE>"
     EMAIL_ADDRESS: "<EMAIL>"
-    IBAN_CODE: "<IBAN>"
+    # IBAN_CODE: "<IBAN>" # <-- Incohérent, le nom de l'entité est IBAN
     IBAN: "<IBAN>"
     IP_ADDRESS: "<ADRESSE_IP>"
     PHONE_NUMBER: "<TELEPHONE>"
