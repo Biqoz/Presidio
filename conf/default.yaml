@@ -13,6 +13,7 @@ nlp_configuration:
       model_name: en_core_web_lg
     - lang_code: fr
       model_name: fr_core_news_sm
+      # Configuration fine du modèle NLP pour réduire les faux positifs
       ner_model_configuration:
         labels_to_ignore:
           - MISC
@@ -35,11 +36,11 @@ nlp_configuration:
 # 2. CONFIGURATION DU REGISTRE DES DÉTECTEURS
 # =====================================================================
 recognizer_registry:
-  # A) CHARGER LES DÉTECTEURS PRÉDÉFINIS pour les langues supportées
-  # Presidio va charger les versions 'en' et 'fr' si elles existent
+  # A) CHARGER LES DÉTECTEURS PRÉDÉFINIS pour 'en' et 'fr'
   load_predefined_recognizers: true
   
-  # B) AJOUTER VOS DÉTECTEURS PERSONNALISÉS (surtout pour le français)
+  # B) AJOUTER VOS DÉTECTEURS PERSONNALISÉS qui s'ajoutent ou remplacent
+  # les versions par défaut pour la langue française
   recognizers:
     - name: EmailRecognizer
       supported_language: fr
@@ -129,8 +130,90 @@ recognizer_registry:
 allow_list:
   - Contrat
   - Document
-  # ... (votre liste complète)
+  - Société
+  - Investisseur
+  - Montant
+  - Prêt
+  - Intérêt
+  - Partie
+  - Parties
+  - Annexe
+  - Remboursement
+  - Conversion
+  - Financement
+  - Sortie
+  - "Juste Valeur Marchande"
+  - Échéance
+  - Clause
+  - Clauses
+  - Principe
+  - Coûts
+  - Notifications
+  - Article
+  - Paragraphe
+  - Directeur
+  - Gérant
+  - Président
+  - DocuSign
+  - SPRL
+  - SA
+  - Loi
+  - Code
+  - Règlement
+  - Décret
+  - Arrêté
+  - Euro
+  - EUR
+  - Euros
+  - Taux
+  - Valeur
+  - Prix
+  - Janvier
+  - Février
+  - Mars
+  - Avril
+  - Mai
+  - Juin
+  - Juillet
+  - Août
+  - Septembre
+  - Octobre
+  - Novembre
+  - Décembre
 
-# 4. CONFIGURATION D'ANONYMISATION (ne change pas)
+# 4. CONFIGURATION DES TRANSFORMATIONS D'ANONYMISATION
 # =====================================================================
-# ... (votre section anonymizer_config reste ici)
+anonymizer_config:
+  default_anonymizers:
+    PERSON: replace
+    LOCATION: replace
+    ORGANIZATION: replace
+    DATE_TIME: replace
+    CREDIT_CARD_NUMBER: replace
+    EMAIL_ADDRESS: replace
+    IP_ADDRESS: replace
+    PHONE_NUMBER: replace
+    URL: replace
+    IBAN: replace
+    MONEY: replace
+    BE_NATIONAL_REGISTER_NUMBER: replace
+    BE_ENTERPRISE_NUMBER: replace
+    FR_SOCIAL_SECURITY_NUMBER: replace
+    FR_SIREN_SIRET: replace
+  
+  replacements:
+    PERSON: "<PERSONNE>"
+    LOCATION: "<LIEU>"
+    ORGANIZATION: "<ORGANISATION>"
+    DATE_TIME: "<DATE>"
+    CREDIT_CARD_NUMBER: "<NUMERO_CARTE_BANCAIRE>"
+    EMAIL_ADDRESS: "<EMAIL>"
+    IBAN: "<IBAN>"
+    IP_ADDRESS: "<ADRESSE_IP>"
+    PHONE_NUMBER: "<TELEPHONE>"
+    URL: "<URL>"
+    MONEY: "<MONTANT>"
+    BE_NATIONAL_REGISTER_NUMBER: "<NRN_BELGE>"
+    BE_ENTERPRISE_NUMBER: "<NUM_ENTREPRISE_BE>"
+    FR_SOCIAL_SECURITY_NUMBER: "<NUM_SECU_FR>"
+    FR_SIREN_SIRET: "<SIREN_SIRET_FR>"
