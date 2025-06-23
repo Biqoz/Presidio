@@ -7,7 +7,8 @@ from flask import Flask, request, jsonify, make_response
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry, PatternRecognizer, Pattern
 from presidio_analyzer.nlp_engine import NlpEngineProvider
 # --- CORRECTION DE L'IMPORT ICI ---
-from presidio_analyzer.predefined_recognizers import DenyListRecognizer 
+# Le DenyListRecognizer est à la racine du package analyzer
+from presidio_analyzer.deny_list_recognizer import DenyListRecognizer
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -54,13 +55,15 @@ for recognizer_conf in custom_recognizers_conf:
     registry.add_recognizer(custom_recognizer)
     logger.info(f"Loaded custom recognizer: {custom_recognizer.name}")
 
-
-# Ajout de l'allow_list (DenyListRecognizer)
-allow_list_terms = [item['text'] for item in config.get("allow_list", []) if isinstance(item, dict) and 'text' in item]
+# --- CORRECTION DE LA GESTION DE L'ALLOW LIST ---
+# On récupère la liste de mots
+allow_list_config = config.get("allow_list", [])
+# On ne garde que les chaînes de caractères simples (Presidio gère mieux cela directement)
+allow_list_terms = [item if isinstance(item, str) else item.get('text') for item in allow_list_config]
 if allow_list_terms:
-    deny_list_recognizer = DenyListRecognizer(supported_entity="GENERIC_PII", deny_list=allow_list_terms)
-    registry.add_recognizer(deny_list_recognizer)
-    logger.info(f"Loaded {len(allow_list_terms)} terms into the allow list (as a deny list recognizer).")
+     logger.info(f"Prepared {len(allow_list_terms)} terms for the allow list.")
+else:
+     logger.info("No allow list terms found in configuration.")
 
 # Initialisation de l'application Flask
 app = Flask(__name__)
@@ -85,9 +88,16 @@ def analyze_text():
         if not text_to_analyze:
              return jsonify({"error": "text field is missing or empty"}), 400
         
+        # Le seuil de confiance est appliqué ici
+        score_threshold = data.get("score_threshold") 
+        
+        # --- CORRECTION DE L'APPEL A ANALYZE ---
+        # On passe directement la liste de mots à ignorer au paramètre 'allow_list'
         results = analyzer.analyze(
             text=text_to_analyze,
-            language=language
+            language=language,
+            score_threshold=score_threshold,
+            allow_list=allow_list_terms
         )
         
         response_data = [res.to_dict() for res in results]
