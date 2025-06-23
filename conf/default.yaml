@@ -1,5 +1,5 @@
 # =====================================================================
-# CONFIGURATION PRESIDIO - v7 (CHIRURGICALE)
+# CONFIGURATION PRESIDIO - v8 (NETTOYÉE ET FIABLE)
 # =====================================================================
 supported_languages: [en, fr]
 
@@ -37,7 +37,8 @@ recognizer_registry:
   load_predefined_recognizers: true
   
   recognizers:
-    # --- DÉTECTEURS FONDAMENTAUX ---
+    # --- DÉTECTEURS FIABLES ET PRÉCIS UNIQUEMENT ---
+
     - name: CustomDateRecognizer
       supported_language: fr
       supported_entity: CUSTOM_DATE
@@ -46,26 +47,19 @@ recognizer_registry:
           regex: "\\b(0[1-9]|[12][0-9]|3[01])[-/.](0[1-9]|1[012])[-/.](19|20)\\d{2}\\b"
           score: 1.0
       context: ["date"]
+
     - name: EmailRecognizer
       supported_language: fr
       supported_entity: EMAIL_ADDRESS
       patterns: [{name: Email Pattern, regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b", score: 1.0}]
       context: ["email", "courriel", "mail"]
+
     - name: PhoneRecognizer
       supported_language: fr
       supported_entity: PHONE_NUMBER
       patterns: [{name: Phone Pattern (FR/BE/LUX), regex: "\\b(?:(?:\\+|00)?(?:32|33|352)|0)\\s?[1-9](?:[\\s.-]?\\d{2}){3,4}\\b", score: 0.8}]
       context: ["téléphone", "tel", "mobile", "gsm", "contact"]
-    - name: JobTitleRecognizer
-      supported_language: fr
-      supported_entity: JOB_TITLE
-      patterns:
-        - name: Common Job Titles
-          regex: "(?i)\\b(Gérant|Directeur des Investissements|Directeur|Directrice|Président|CEO|CFO|CTO|Manager|Responsable|Chef de projet)\\b"
-          score: 0.8
-      context: ["représentée par", "fonction", "poste", "attention de"]
 
-    # --- DÉTECTEURS FINANCIERS ---
     - name: CreditCardRecognizer
       supported_language: fr
       supported_entity: CREDIT_CARD_NUMBER
@@ -74,22 +68,13 @@ recognizer_registry:
           regex: "\\b(?:4[0-9]{3}(?:[ -]?[0-9]{4}){3}|5[1-5][0-9]{2}(?:[ -]?[0-9]{4}){3})\\b"
           score: 0.95
       context: ["carte bancaire", "visa", "mastercard"]
+
     - name: IbanRecognizer
       supported_language: fr
       supported_entity: IBAN
       patterns: [{name: IBAN Pattern, regex: "\\b[A-Z]{2}[0-9]{2}\\s?(?:[A-Z0-9]{4}\\s?){2,7}[A-Z0-9]{1,4}\\b", score: 0.95}]
       context: ["iban", "compte", "bancaire"]
-    - name: BICRecognizer
-      supported_language: fr
-      supported_entity: BE_BIC
-      patterns:
-        - name: BIC/SWIFT Code
-          regex: "\\b([A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?)\\b"
-          # MODIFIÉ : Score abaissé pour ne pas être trop agressif
-          score: 0.85
-      context: ["bic", "swift"]
 
-    # --- NUMÉROS D'IDENTIFICATION (FRANCE) ---
     - name: FrenchINSEERecognizer
       supported_language: fr
       supported_entity: FR_SOCIAL_SECURITY_NUMBER
@@ -98,26 +83,25 @@ recognizer_registry:
           regex: "\\b[12]\\s*[0-9]{2}\\s*(?:0[1-9]|1[0-2])\\s*(?:2[ABab]|[0-9]{2})\\s*[0-9]{3}\\s*[0-9]{3}\\s*[0-9]{2}\\b"
           score: 0.95
       context: ["sécurité sociale", "insee", "nir"]
-    # ... (les autres détecteurs fr et be restent ici) ...
+      
+    - name: BelgianNRNRecognizer
+      supported_language: fr
+      supported_entity: BE_NATIONAL_REGISTER_NUMBER
+      patterns: [{name: NRN Pattern, regex: "\\b[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}-[0-9]{3}\\.[0-9]{2}\\b", score: 1.0}]
+      context: ["registre national", "nrn", "niss"]
+
+    - name: BelgianEnterpriseRecognizer
+      supported_language: fr
+      supported_entity: BE_ENTERPRISE_NUMBER
+      patterns: [{name: BE Enterprise Number, regex: "\\bBE\\s?0\\d{3}[\\.\\s]?\\d{3}[\\.\\s]?\\d{3}\\b", score: 0.95}]
+      context: ["numéro d'entreprise", "btw", "tva", "BCE", "KBO"]
 
 # 3. LISTE D'EXCLUSION (ALLOW LIST)
 # =====================================================================
 allow_list:
-  # MODIFIÉ : Ajout des versions en majuscules et des mots problématiques
-  - fictive
-  - fictives
-  - FICTIVES
-  - test
-  - TEST
-  - personne
-  - PERSONNE
-  - personnelles
-  - PERSONNELLES
-  - document
-  - DOCUMENT
-  # --- Liste existante ---
+  # On garde une liste minimale car les détecteurs sont maintenant plus précis
   - Contrat
-  - CONTRAT
+  - Document
   - Société
   - Investisseur
   - Montant
@@ -156,22 +140,9 @@ allow_list:
   - Taux
   - Valeur
   - Prix
-  - Janvier
-  - Février
-  - Mars
-  - Avril
-  - Mai
-  - Juin
-  - Juillet
-  - Août
-  - Septembre
-  - Octobre
-  - Novembre
-  - Décembre
 
 # 4. CONFIGURATION DES TRANSFORMATIONS D'ANONYMISATION
 # =====================================================================
-# Cette section n'a pas besoin de changer, elle est déjà complète
 anonymizer_config:
   default_anonymizers:
     PERSON: replace
@@ -183,19 +154,9 @@ anonymizer_config:
     EMAIL_ADDRESS: replace
     PHONE_NUMBER: replace
     IBAN: replace
-    MONEY: replace
-    BE_BIC: replace
-    JOB_TITLE: replace
     BE_NATIONAL_REGISTER_NUMBER: replace
     BE_ENTERPRISE_NUMBER: replace
-    BE_ID_CARD_NUMBER: replace
-    BE_LICENSE_PLATE: replace
-    BE_PASSPORT: replace
     FR_SOCIAL_SECURITY_NUMBER: replace
-    FR_SIREN_SIRET: replace
-    FR_PASSPORT: replace
-    FR_ID_CARD_NUMBER: replace
-    FR_LICENSE_PLATE: replace
   
   replacements:
     PERSON: "<PERSONNE>"
@@ -207,16 +168,6 @@ anonymizer_config:
     EMAIL_ADDRESS: "<EMAIL>"
     PHONE_NUMBER: "<TELEPHONE>"
     IBAN: "<IBAN>"
-    MONEY: "<MONTANT>"
-    BE_BIC: "<CODE_BIC>"
-    JOB_TITLE: "<FONCTION>"
     BE_NATIONAL_REGISTER_NUMBER: "<NRN_BELGE>"
     BE_ENTERPRISE_NUMBER: "<NUM_ENTREPRISE_BE>"
-    BE_ID_CARD_NUMBER: "<CARTE_ID_BE>"
-    BE_LICENSE_PLATE: "<PLAQUE_BE>"
-    BE_PASSPORT: "<PASSEPORT_BE>"
     FR_SOCIAL_SECURITY_NUMBER: "<NUM_SECU_FR>"
-    FR_SIREN_SIRET: "<SIREN_SIRET_FR>"
-    FR_PASSPORT: "<PASSEPORT_FR>"
-    FR_ID_CARD_NUMBER: "<CARTE_ID_FR>"
-    FR_LICENSE_PLATE: "<PLAQUE_FR>"
