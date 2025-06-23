@@ -3,7 +3,7 @@ from presidio_analyzer import AnalyzerEngine
 import os
 import logging
 
-# Configuration du logging pour un meilleur débogage
+# Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -14,14 +14,20 @@ app = Flask(__name__)
 analyzer = None
 try:
     logger.info("Initializing AnalyzerEngine...")
-    # L'AnalyzerEngine va chercher la configuration via la variable d'environnement
     analyzer = AnalyzerEngine()
     logger.info("AnalyzerEngine initialized successfully.")
-    # Affiche les recognizers chargés pour confirmer que la config est bien lue
-    loaded_recognizers = [r.name for r in analyzer.registry.get_recognizers()]
-    logger.info(f"Loaded recognizers: {loaded_recognizers}")
+    
+    # --- CORRECTION ICI ---
+    # La ligne de débogage est corrigée ou commentée.
+    # On va la commenter pour l'instant car elle n'est pas essentielle au fonctionnement.
+    # loaded_recognizers = [r.name for r in analyzer.registry.get_recognizers(language="fr")]
+    # logger.info(f"Loaded recognizers for 'fr': {loaded_recognizers}")
+
 except Exception as e:
+    # La ligne 'analyzer = None' était déjà là, mais on s'assure qu'elle est bien là.
+    analyzer = None
     logger.exception("FATAL: Error initializing AnalyzerEngine.")
+
 
 @app.route('/analyze', methods=['POST'])
 def analyze_text():
@@ -45,5 +51,4 @@ def analyze_text():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    # Pour un test local sans gunicorn
     app.run(host='0.0.0.0', port=5001)
