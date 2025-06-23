@@ -13,7 +13,6 @@ nlp_configuration:
       model_name: en_core_web_lg
     - lang_code: fr
       model_name: fr_core_news_sm
-      # Configuration fine du modèle NLP pour réduire les faux positifs
       ner_model_configuration:
         labels_to_ignore:
           - MISC
@@ -36,15 +35,12 @@ nlp_configuration:
 # 2. CONFIGURATION DU REGISTRE DES DÉTECTEURS
 # =====================================================================
 recognizer_registry:
-  # A) CHARGER LES DÉTECTEURS PRÉDÉFINIS pour 'en' et 'fr'
   load_predefined_recognizers: true
   
-  # B) AJOUTER VOS DÉTECTEURS PERSONNALISÉS qui s'ajoutent ou remplacent
-  # les versions par défaut pour la langue française
   recognizers:
     - name: EmailRecognizer
       supported_language: fr
-      entity_name: EMAIL_ADDRESS
+      supported_entity: EMAIL_ADDRESS  # CORRECTION: entity_name -> supported_entity
       patterns:
         - name: Email Pattern
           regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"
@@ -53,7 +49,7 @@ recognizer_registry:
 
     - name: PhoneRecognizer
       supported_language: fr
-      entity_name: PHONE_NUMBER
+      supported_entity: PHONE_NUMBER  # CORRECTION: entity_name -> supported_entity
       patterns:
         - name: Phone Pattern (FR/BE/LUX)
           regex: "\\b(?:(?:\\+|00)?(?:32|33|352)|0)\\s?[1-9](?:[\\s.-]?\\d{2}){3,4}\\b"
@@ -62,7 +58,7 @@ recognizer_registry:
 
     - name: IbanRecognizer
       supported_language: fr
-      entity_name: IBAN
+      supported_entity: IBAN  # CORRECTION: entity_name -> supported_entity
       patterns:
         - name: IBAN Pattern
           regex: "\\b[A-Z]{2}[0-9]{2}\\s?(?:[A-Z0-9]{4}\\s?){2,7}[A-Z0-9]{1,4}\\b"
@@ -71,7 +67,7 @@ recognizer_registry:
     
     - name: CreditCardRecognizer
       supported_language: fr
-      entity_name: CREDIT_CARD_NUMBER
+      supported_entity: CREDIT_CARD_NUMBER  # CORRECTION: entity_name -> supported_entity
       patterns:
         - name: Credit Card Pattern
           regex: "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9]{2})[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11})\\b"
@@ -80,7 +76,7 @@ recognizer_registry:
 
     - name: MoneyRecognizer
       supported_language: fr
-      entity_name: MONEY
+      supported_entity: MONEY  # CORRECTION: entity_name -> supported_entity
       patterns:
         - name: Money Pattern EUR
           regex: "(?:EUR|€)\\s*\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?|\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?\\s*(?:EUR|€)"
@@ -88,7 +84,7 @@ recognizer_registry:
     
     - name: BelgianNRNRecognizer
       supported_language: fr
-      entity_name: BE_NATIONAL_REGISTER_NUMBER
+      supported_entity: BE_NATIONAL_REGISTER_NUMBER  # CORRECTION: entity_name -> supported_entity
       patterns:
         - name: NRN Pattern
           regex: "\\b[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}-[0-9]{3}\\.[0-9]{2}\\b"
@@ -97,7 +93,7 @@ recognizer_registry:
 
     - name: BelgianEnterpriseRecognizer
       supported_language: fr
-      entity_name: BE_ENTERPRISE_NUMBER
+      supported_entity: BE_ENTERPRISE_NUMBER  # CORRECTION: entity_name -> supported_entity
       patterns:
         - name: BE Enterprise Number
           regex: "\\bBE\\s?0\\d{3}[\\.\\s]?\\d{3}[\\.\\s]?\\d{3}\\b"
@@ -106,7 +102,7 @@ recognizer_registry:
 
     - name: FrenchINSEERecognizer
       supported_language: fr
-      entity_name: FR_SOCIAL_SECURITY_NUMBER
+      supported_entity: FR_SOCIAL_SECURITY_NUMBER  # CORRECTION: entity_name -> supported_entity
       patterns:
         - name: INSEE Pattern
           regex: "\\b[12][\\s]?[0-9]{2}[\\s]?(?:0[1-9]|1[0-2])[\\s]?(?:2[ABab]|[0-9]{2})[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{2}\\b"
@@ -115,7 +111,7 @@ recognizer_registry:
 
     - name: FrenchSIRENSIRETRecognizer
       supported_language: fr
-      entity_name: FR_SIREN_SIRET
+      supported_entity: FR_SIREN_SIRET  # CORRECTION: entity_name -> supported_entity
       patterns:
         - name: SIRET Pattern
           regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{5}\\b"
