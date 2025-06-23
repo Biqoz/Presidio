@@ -1,6 +1,9 @@
 import os
 import logging
+import yaml
 from flask import Flask, request, jsonify, make_response
+
+# Import des classes nécessaires de Presidio
 from presidio_analyzer import AnalyzerEngine
 
 # Configuration du logging
@@ -14,23 +17,22 @@ app = Flask(__name__)
 # L'AnalyzerEngine, lorsqu'il est initialisé sans arguments, va automatiquement :
 # 1. Chercher la variable d'environnement PRESIDIO_ANALYZER_CONFIG_FILE.
 # 2. Lire le fichier de configuration (votre default.yaml).
-# 3. Créer le moteur NLP, le registre de recognizers, et charger les recognizers
-#    personnalisés et l'allow_list, en s'assurant que les langues sont cohérentes.
+# 3. Créer et configurer tous les composants (moteur NLP, recognizers, etc.).
 
+analyzer = None
 try:
     logger.info("Initializing AnalyzerEngine using configuration from environment variable...")
     analyzer = AnalyzerEngine()
     logger.info("AnalyzerEngine initialized successfully.")
-    # Pour le débogage, on peut lister les recognizers pour une langue spécifique
-    logger.info(f"Loaded recognizers for 'fr': {[rec.name for rec in analyzer.get_recognizers(language='fr')]}")
 except Exception as e:
     logger.exception("FATAL: Error initializing AnalyzerEngine from configuration.")
+    # On s'assure que l'analyzer est None pour que les requêtes échouent proprement
     analyzer = None
 
 @app.route('/analyze', methods=['POST'])
 def analyze_text():
     if not analyzer:
-        return jsonify({"error": "Analyzer engine not initialized"}), 500
+        return jsonify({"error": "Analyzer engine not initialized. Check startup logs."}), 500
     
     try:
         data = request.get_json(force=True)
@@ -40,7 +42,7 @@ def analyze_text():
         if not text_to_analyze:
              return jsonify({"error": "text field is missing or empty"}), 400
         
-        # On n'a plus besoin de passer l'allow_list ici, l'Analyzer l'a déjà chargée
+        # L'allow list est chargée par l'AnalyzerEngine depuis le default.yaml
         results = analyzer.analyze(
             text=text_to_analyze,
             language=language
@@ -49,8 +51,9 @@ def analyze_text():
         response_data = [res.to_dict() for res in results]
         return make_response(jsonify(response_data), 200)
     except Exception as e:
-        logger.exception("Error during analysis.")
+        logger.exception("Error during analysis request.")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
+    # Pour un test local sans gunicorn
     app.run(host='0.0.0.0', port=5001)
