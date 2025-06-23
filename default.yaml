@@ -13,96 +13,29 @@ models:
 
 # Configuration du comportement du moteur NLP
 ner_model_configuration:
-  # Ne plus ignorer ORG. On va gérer les faux positifs d'ORG via l'allow_list, c'est plus précis.
   labels_to_ignore:
     - MISC
   
-  # Seuils de confiance par entité. Augmentés pour réduire les faux positifs.
   confidence_threshold:
-    default: 0.6 # Plus strict que 0.35 par défaut
+    default: 0.6
     EMAIL_ADDRESS: 0.8
     PHONE_NUMBER: 0.8
-    PERSON: 0.85 # Très strict pour les noms de personnes
-    LOCATION: 0.75 # Moins de faux positifs pour les lieux
-    MONEY: 0.85 # Nouveau type d'entité pour les montants
-
-# Section où vous définissez vos recognizers personnalisés basés sur des regex
-# C'est ici que sont déplacées les définitions de 'ad_hoc_recognizers' de route.ts
-recognizers:
-  - name: BelgianNRNRecognizer
-    entity_name: BE_NATIONAL_REGISTER_NUMBER
-    supported_language: fr
-    patterns:
-      - name: NRN_Pattern
-        # Regex plus robuste pour le NRN belge (prend en compte différents formats)
-        regex: "\\b(?:[0-9]{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12][0-9]|3[01]))-?\\d{3}\\.?\\d{2}\\b"
-        score: 1.0 # Score très élevé car regex spécifique
-
-  - name: BelgianEnterpriseRecognizer
-    entity_name: BE_ENTERPRISE_NUMBER
-    supported_language: fr
-    patterns:
-      - name: BTW_Pattern
-        # Regex pour les numéros d'entreprise belges (BE 0XXX.XXX.XXX)
-        regex: "\\bBE\\s?0\\d{3}[\\.\\s]?\\d{3}[\\.\\s]?\\d{3}\\b"
-        score: 0.95
-
-  - name: IBANRecognizer
-    entity_name: IBAN
-    supported_language: fr
-    patterns:
-      - name: IBAN_Pattern
-        # Regex IBAN (plus générique, mais capturera les belges aussi)
-        regex: "\\b[A-Z]{2}\\d{2}\\s?(?:[A-Z0-9]{4}\\s?){2,7}[A-Z0-9]{1,4}\\b"
-        score: 0.95
-
-  - name: PhoneRecognizer
-    entity_name: PHONE_NUMBER
-    supported_language: fr
-    patterns:
-      - name: Phone_Pattern
-        # Regex pour numéros de téléphone belges/français/luxembourgeois
-        regex: "\\b(?:(?:\\+|00)?(?:32|33|352)|0)\\s?[1-9](?:[\\s.-]?\\d{2}){3,4}\\b"
-        score: 0.8
-
-  - name: EmailRecognizer
-    entity_name: EMAIL_ADDRESS
-    supported_language: fr
-    patterns:
-      - name: Email_Pattern
-        # Regex pour les adresses email
-        regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"
-        score: 1.0
-
-  - name: MoneyRecognizer # NOUVEAU : Recognizer pour les montants monétaires
-    entity_name: MONEY
-    supported_language: fr
-    patterns:
-      - name: Money_Pattern
-        # Regex pour des formats comme EUR 250.000, 250.000 EUR, 250 000€
-        regex: "(?:EUR|€)\\s*\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?|\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?\\s*(?:EUR|€)"
-        score: 0.85
-
+    PERSON: 0.85
+    LOCATION: 0.75
+    MONEY: 0.85
 
 # Configuration des détecteurs (Recognizers)
-# CECI EST LA CLÉ : vous listez les noms des recognizers que vous avez définis ci-dessus.
-# SUPPRIMEZ : - presidio_config.custom_recognizers.custom_recognizers
-# AJOUTEZ : Les noms de vos recognizers custom.
+# Ici, nous pointons directement vers le module Python que nous venons de créer.
+# Presidio chargera tous les recognizers définis dans ce module.
 recognizer_registry:
-  - default # Gardez toujours 'default' pour les recognizers intégrés de Presidio
-  - BelgianNRNRecognizer
-  - BelgianEnterpriseRecognizer
-  - IBANRecognizer
-  - PhoneRecognizer
-  - EmailRecognizer
-  - MoneyRecognizer # Active le nouveau recognizer MONEY
+  - default # Charger les détecteurs par défaut de Presidio
+  - custom_recognizers # Référence au dossier/module Python 'custom_recognizers'
 
 # Liste des mots à ignorer (faux positifs courants)
-# Important: spécifiez le type d'entité si le mot est souvent mal labellisé comme ce type
 allow_list:
   # Termes contractuels/juridiques/financiers génériques souvent mal labellisés
   - text: Contrat
-    type: LOCATION # Si 'Contrat' est souvent vu comme une LOCATION
+    type: LOCATION
   - text: contrat
     type: LOCATION
   - text: Contrats
@@ -112,11 +45,11 @@ allow_list:
   - text: document
     type: LOCATION
   - text: Société
-    type: PERSON # Si 'Société' est souvent vu comme une PERSON
+    type: PERSON
   - text: Investisseur
     type: PERSON
   - text: Montant
-    type: LOCATION # Si 'Montant' est souvent vu comme une LOCATION. Maintenant aussi MONEY sera détecté.
+    type: LOCATION
   - text: Prêt
     type: LOCATION
   - text: Intérêt
@@ -126,7 +59,7 @@ allow_list:
   - text: Partie
     type: LOCATION
   - text: Parties
-    type: PERSON # Si 'Parties' est souvent vu comme une PERSON
+    type: PERSON
   - text: Annexe
     type: LOCATION
   - text: Remboursement
@@ -136,9 +69,9 @@ allow_list:
   - text: Financement
     type: LOCATION
   - text: Sortie
-    type: LOCATION # Important, 'Sortie' était mal labellisé
+    type: LOCATION
   - text: "Juste Valeur Marchande"
-    type: PERSON # Était mal labellisé
+    type: PERSON
   - text: Échéance
     type: LOCATION
   - text: Clause
@@ -148,28 +81,27 @@ allow_list:
   - text: Principe
     type: LOCATION
   - text: Coûts
-    type: PERSON # Était mal labellisé
+    type: PERSON
   - text: Notifications
-    type: LOCATION # Était mal labellisé
+    type: LOCATION
   - text: Article
     type: LOCATION
   - text: Paragraphe
     type: LOCATION
   - text: Directeur
-    type: LOCATION # Ou PERSON, selon le contexte où il est mal labellisé seul
+    type: LOCATION
   - text: Gérant
     type: LOCATION
   - text: Président
     type: LOCATION
-  - text: DocuSign # Ajouté pour éviter le faux positif comme PERSON
+  - text: DocuSign
     type: PERSON
-  - text: SPRL # Société belge
-    type: ORG # Indique que ce n'est pas une personne
-
+  - text: SPRL
+    type: ORG
 
   # Termes financiers courants
   - text: Euro
-    type: LOCATION # Si 'Euro' est mal labellisé
+    type: LOCATION
   - text: EUR
     type: LOCATION
   - text: Euros
@@ -195,7 +127,7 @@ allow_list:
   - text: Arrêté
     type: LOCATION
 
-  # Mois et dates génériques (si mal labellisés)
+  # Mois et dates génériques
   - text: Janvier
     type: LOCATION
   - text: Février
@@ -230,12 +162,11 @@ anonymizer_config:
     BE_ENTERPRISE_NUMBER: replace
     FR_SOCIAL_SECURITY_NUMBER: replace
     IBAN: replace
-    BE_BANK_ACCOUNT: replace # Si vous avez BE_BANK_ACCOUNT comme entité
-    MONEY: replace # Ajoutez cette ligne pour anonymiser la nouvelle entité MONEY
-    LOCATION: replace # Ajoutez si vous voulez anonymiser les locations détectées
-    ORG: replace # Ajoutez si vous voulez anonymiser les organisations
-
-  # Valeurs de remplacement personnalisées
+    BE_BANK_ACCOUNT: replace
+    MONEY: replace
+    LOCATION: replace
+    ORG: replace
+  
   replacements:
     PERSON: "<PERSON>"
     EMAIL_ADDRESS: "<EMAIL_ADDRESS>"
@@ -245,6 +176,6 @@ anonymizer_config:
     FR_SOCIAL_SECURITY_NUMBER: "<FR_SOCIAL_SECURITY_NUMBER>"
     IBAN: "<IBAN>"
     BE_BANK_ACCOUNT: "<COMPTE_BANCAIRE_BE>"
-    MONEY: "<MONEY>" # Remplacement pour les montants monétaires
-    LOCATION: "<LOCATION>" # Remplacement pour les locations
-    ORG: "<ORGANIZATION>" # Remplacement pour les organisations
+    MONEY: "<MONEY>"
+    LOCATION: "<LOCATION>"
+    ORG: "<ORGANIZATION>"
