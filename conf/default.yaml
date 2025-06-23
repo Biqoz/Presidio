@@ -1,61 +1,292 @@
-# Configuration NLP unifiée
-nlp_configuration:
-  nlp_engine_name: spacy
-  models:
-    - lang_code: en
-      model_name: en_core_web_lg
-    - lang_code: fr
-      model_name: fr_core_news_sm
+# =====================================================================
+# CONFIGURATION PRESIDIO COMPLÈTE - RGPD FRANÇAIS/BELGE
+# =====================================================================
 
-  ner_model_configuration:
-    model_to_presidio_entity_mapping:
-      PER: PERSON
-      PERSON: PERSON
-      ORG: ORGANIZATION
-      ORGANIZATION: ORGANIZATION
-      LOC: LOCATION
-      LOCATION: LOCATION
-      GPE: LOCATION
-      MISC: ORGANIZATION
+# 1. CONFIGURATION DU MOTEUR NLP (Natural Language Processing)
+# =====================================================================
+# On utilise spaCy pour l'anglais et le français.
+nlp_engine_name: spacy
+supported_languages: [en, fr]
+models:
+  - lang_code: en
+    model_name: en_core_web_lg
+  - lang_code: fr
+    model_name: fr_core_news_sm
 
-    confidence_threshold:
-      default: 0.35
-      EMAIL_ADDRESS: 0.4
-      PHONE_NUMBER: 0.5
-      PERSON: 0.6
+# Configuration fine du modèle NLP pour réduire les faux positifs
+ner_model_configuration:
+  # On demande au modèle d'être plus sûr de lui avant de labelliser une entité.
+  confidence_threshold:
+    default: 0.65  # Seuil par défaut pour toutes les entités
+    PERSON: 0.85     # Très strict pour les noms de personnes
+    LOCATION: 0.75   # Strict pour les lieux
+    ORGANIZATION: 0.7 # Un peu moins strict pour les organisations
+  
+  # On ignore les catégories d'entités spaCy qui sont rarement des PII
+  labels_to_ignore:
+    - MISC
+    - CARDINAL
+    - EVENT
+    - LANGUAGE
+    - LAW
+    - ORDINAL
+    - PERCENT
+    - PRODUCT
+    - QUANTITY
+    - WORK_OF_ART
 
-    labels_to_ignore:
-      - MISC
-      - CARDINAL
-      - EVENT
-      - LANGUAGE
-      - LAW
-      - MONEY
-      - ORDINAL
-      - PERCENT
-      - PRODUCT
-      - QUANTITY
-      - WORK_OF_ART
+# 2. DÉFINITION DES DÉTECTEURS (RECOGNIZERS) PERSONNALISÉS
+# =====================================================================
+# Cette section définit tous nos détecteurs personnalisés basés sur des regex.
+recognizers:
+  # -- Données d'identification standards --
+  - name: EmailRecognizer
+    entity_name: EMAIL_ADDRESS
+    supported_language: fr
+    patterns:
+      - name: Email Pattern
+        regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"
+        score: 1.0
+    context: ["email", "courriel", "mail"]
 
-# Configuration des langues supportées
-supported_languages:
-  - en
-  - fr
+  - name: PhoneRecognizer
+    entity_name: PHONE_NUMBER
+    supported_language: fr
+    patterns:
+      - name: Phone Pattern (FR/BE/LUX)
+        regex: "\\b(?:(?:\\+|00)?(?:32|33|352)|0)\\s?[1-9](?:[\\s.-]?\\d{2}){3,4}\\b"
+        score: 0.8
+    context: ["téléphone", "tel", "mobile", "gsm", "contact"]
 
-# Configuration du registre
+  # -- Données financières --
+  - name: IbanRecognizer
+    entity_name: IBAN
+    supported_language: fr
+    patterns:
+      - name: IBAN Pattern
+        regex: "\\b[A-Z]{2}[0-9]{2}\\s?(?:[A-Z0-9]{4}\\s?){2,7}[A-Z0-9]{1,4}\\b"
+        score: 0.95
+    context: ["iban", "compte", "bancaire"]
+  
+  - name: CreditCardRecognizer
+    entity_name: CREDIT_CARD_NUMBER
+    supported_language: fr
+    patterns:
+      - name: Credit Card Pattern
+        regex: "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9]{2})[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11})\\b"
+        score: 0.9
+    context: ["carte bancaire", "visa", "mastercard", "amex"]
+
+  - name: MoneyRecognizer
+    entity_name: MONEY
+    supported_language: fr
+    patterns:
+      - name: Money Pattern EUR
+        regex: "(?:EUR|€)\\s*\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?|\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?\\s*(?:EUR|€)"
+        score: 0.85
+  
+  # -- Données d'identification belges --
+  - name: BelgianNRNRecognizer
+    entity_name: BE_NATIONAL_REGISTER_NUMBER
+    supported_language: fr
+    patterns:
+      - name: NRN Pattern
+        regex: "\\b[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}-[0-9]{3}\\.[0-9]{2}\\b"
+        score: 1.0
+    context: ["registre national", "nrn", "niss"]
+
+  - name: BelgianEnterpriseRecognizer
+    entity_name: BE_ENTERPRISE_NUMBER
+    supported_language: fr
+    patterns:
+      - name: BE Enterprise Number
+        regex: "\\bBE\\s?0\\d{3}[\\.\\s]?\\d{3}[\\.\\s]?\\d{3}\\b"
+        score: 0.95
+    context: ["numéro d'entreprise", "btw", "tva", "BCE", "KBO"]
+
+  # -- Données d'identification françaises --
+  - name: FrenchINSEERecognizer
+    entity_name: FR_SOCIAL_SECURITY_NUMBER
+    supported_language: fr
+    patterns:
+      - name: INSEE Pattern
+        regex: "\\b[12][\\s]?[0-9]{2}[\\s]?(?:0[1-9]|1[0-2])[\\s]?(?:2[ABab]|[0-9]{2})[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{2}\\b"
+        score: 0.95
+    context: ["sécurité sociale", "insee", "nir"]
+
+  - name: FrenchSIRENSIRETRecognizer
+    entity_name: FR_SIREN_SIRET
+    supported_language: fr
+    patterns:
+      - name: SIRET Pattern
+        regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{5}\\b"
+        score: 0.9
+      - name: SIREN Pattern
+        regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}\\b"
+        score: 0.85
+    context: ["siren", "siret"]
+
+# 3. ACTIVATION DES DÉTECTEURS
+# =====================================================================
+# C'est la liste de tous les détecteurs que Presidio doit charger et utiliser.
 recognizer_registry:
-  - default
+  - default # Garder pour les détecteurs intégrés de Presidio (URL, IP_ADDRESS, etc.)
+  # Activation de nos détecteurs personnalisés définis ci-dessus
+  - EmailRecognizer
+  - PhoneRecognizer
+  - IbanRecognizer
+  - CreditCardRecognizer
+  - MoneyRecognizer
+  - BelgianNRNRecognizer
+  - BelgianEnterpriseRecognizer
+  - FrenchINSEERecognizer
+  - FrenchSIRENSIRETRecognizer
 
-# Liste d'exclusion pour éviter les faux positifs
+# 4. LISTE D'EXCLUSION (ALLOW LIST)
+# =====================================================================
+# C'est une étape cruciale pour éviter que des termes métiers soient mal labellisés.
 allow_list:
-  - Contrat
-  - Document
-  - Société
-  - Montant
-  - Partie
-  - Annexe
-  - Euro
-  - EUR
-  - Taux
-  - Valeur
-  - Prix
+  # Termes contractuels et juridiques
+  - text: Contrat
+    type: LOCATION
+  - text: contrat
+    type: LOCATION
+  - text: Document
+    type: LOCATION
+  - text: document
+    type: LOCATION
+  - text: Société
+    type: PERSON
+  - text: Investisseur
+    type: PERSON
+  - text: Montant
+    type: LOCATION
+  - text: Prêt
+    type: LOCATION
+  - text: Intérêt
+    type: LOCATION
+  - text: Partie
+    type: LOCATION
+  - text: Parties
+    type: PERSON
+  - text: Annexe
+    type: LOCATION
+  - text: Remboursement
+    type: LOCATION
+  - text: Conversion
+    type: LOCATION
+  - text: Financement
+    type: LOCATION
+  - text: Sortie
+    type: LOCATION
+  - text: "Juste Valeur Marchande"
+    type: PERSON
+  - text: Échéance
+    type: LOCATION
+  - text: Clause
+    type: LOCATION
+  - text: Clauses
+    type: LOCATION
+  - text: Principe
+    type: LOCATION
+  - text: Coûts
+    type: PERSON
+  - text: Notifications
+    type: LOCATION
+  - text: Article
+    type: LOCATION
+  - text: Paragraphe
+    type: LOCATION
+  - text: Directeur
+    type: LOCATION
+  - text: Gérant
+    type: LOCATION
+  - text: Président
+    type: LOCATION
+  - text: DocuSign
+    type: PERSON
+  - text: SPRL
+    type: ORG
+  - text: SA
+    type: ORG
+  - text: Loi
+    type: LOCATION
+  - text: Code
+    type: LOCATION
+  - text: Règlement
+    type: LOCATION
+  - text: Décret
+    type: LOCATION
+  - text: Arrêté
+    type: LOCATION
+  # Termes financiers
+  - text: Euro
+    type: LOCATION
+  - text: EUR
+    type: LOCATION
+  - text: Euros
+    type: LOCATION
+  - text: Taux
+    type: LOCATION
+  - text: Valeur
+    type: LOCATION
+  - text: Prix
+    type: LOCATION
+  # Mois de l'année
+  - Janvier
+  - Février
+  - Mars
+  - Avril
+  - Mai
+  - Juin
+  - Juillet
+  - Août
+  - Septembre
+  - Octobre
+  - Novembre
+  - Décembre
+
+# 5. CONFIGURATION DES TRANSFORMATIONS D'ANONYMISATION
+# =====================================================================
+# Cette section est lue par le service Anonymizer pour savoir comment remplacer les PII.
+anonymizer_config:
+  # Remplacement par défaut pour chaque type d'entité.
+  default_anonymizers:
+    # Entités NLP standard
+    PERSON: replace
+    LOCATION: replace
+    ORGANIZATION: replace
+    DATE_TIME: replace
+    # Entités Presidio standard
+    CREDIT_CARD_NUMBER: replace
+    EMAIL_ADDRESS: replace
+    IBAN_CODE: replace # Le recognizer par défaut utilise IBAN_CODE
+    IP_ADDRESS: replace
+    PHONE_NUMBER: replace
+    URL: replace
+    # Entités personnalisées
+    IBAN: replace # Notre recognizer custom
+    MONEY: replace
+    BE_NATIONAL_REGISTER_NUMBER: replace
+    BE_ENTERPRISE_NUMBER: replace
+    FR_SOCIAL_SECURITY_NUMBER: replace
+    FR_SIREN_SIRET: replace
+  
+  # Valeurs de remplacement personnalisées
+  replacements:
+    PERSON: "<PERSONNE>"
+    LOCATION: "<LIEU>"
+    ORGANIZATION: "<ORGANISATION>"
+    DATE_TIME: "<DATE>"
+    CREDIT_CARD_NUMBER: "<NUMERO_CARTE_BANCAIRE>"
+    EMAIL_ADDRESS: "<EMAIL>"
+    IBAN_CODE: "<IBAN>"
+    IBAN: "<IBAN>" # Pour notre recognizer custom
+    IP_ADDRESS: "<ADRESSE_IP>"
+    PHONE_NUMBER: "<TELEPHONE>"
+    URL: "<URL>"
+    MONEY: "<MONTANT>"
+    BE_NATIONAL_REGISTER_NUMBER: "<NRN_BELGE>"
+    BE_ENTERPRISE_NUMBER: "<NUM_ENTREPRISE_BE>"
+    FR_SOCIAL_SECURITY_NUMBER: "<NUM_SECU_FR>"
+    FR_SIREN_SIRET: "<SIREN_SIRET_FR>"
