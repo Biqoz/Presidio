@@ -9,11 +9,15 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir \
     https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Installer Gunicorn (si ce n'est pas déjà fait et si vous ne l'aviez pas dans un requirements.txt)
-RUN pip install --no-cache-dir gunicorn
+# **** NOUVEAU : Copier et installer requirements.txt ****
+# Assurez-vous que requirements.txt est à la racine de votre contexte de build
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# **** NOUVEAU : Installer PyYAML ****
-RUN pip install --no-cache-dir PyYAML
+# Les lignes d'installation individuelles pour gunicorn et PyYAML deviennent inutiles si elles sont dans requirements.txt
+# (Si gunicorn n'est pas dans votre requirements.txt, vous devrez le laisser ou l'ajouter)
+# RUN pip install --no-cache-dir gunicorn
+# RUN pip install --no-cache-dir PyYAML
 
 # Copier votre fichier default.yaml dans le répertoire de configuration de Presidio.
 COPY default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
