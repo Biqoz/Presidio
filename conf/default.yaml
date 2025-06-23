@@ -1,5 +1,5 @@
 # =====================================================================
-# CONFIGURATION PRESIDIO - v17 (FINALE, COMPLÈTE ET CORRIGÉE)
+# CONFIGURATION PRESIDIO - v19 (FINALE, COMPLÈTE ET FIABLE)
 # =====================================================================
 supported_languages: [en, fr]
 
@@ -36,7 +36,7 @@ recognizer_registry:
   load_predefined_recognizers: true
   
   recognizers:
-    # --- DÉTECTEURS FIABLES ET PRÉCIS ---
+    # --- DÉTECTEURS FIABLES ET PRÉCIS UNIQUEMENT ---
 
     - name: CustomDateRecognizer
       supported_language: fr
@@ -53,14 +53,25 @@ recognizer_registry:
       patterns: [{name: Email Pattern, regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b", score: 1.0}]
       context: ["email", "courriel", "mail"]
 
-    - name: PhoneRecognizer
+    # --- NOUVEAU : Règle Téléphone simple et robuste pour la Belgique ---
+    - name: BelgianPhoneRecognizer
       supported_language: fr
       supported_entity: PHONE_NUMBER
       patterns:
-        - name: Phone Pattern Flexible (BE/FR)
-          regex: "\\b(?:\\+|00)(32|33)[\\s.-]?\\d(?:[\\s.-]?\\d{2,3}){2,3}\\b"
-          score: 0.95
+        - name: Phone Pattern BE (+32 + 9 chiffres)
+          regex: "\\b(?:\\+|00)32(?:[\\s.-]?\\d){9}\\b"
+          score: 1.0
       context: ["téléphone", "tel"]
+      
+    # --- RESTAURÉ : Détecteur de Carte de Crédit fiable, en plus du défaut ---
+    - name: CustomCreditCardRecognizer
+      supported_language: fr
+      supported_entity: CREDIT_CARD_NUMBER
+      patterns:
+        - name: Credit Card with spaces (Visa, Mastercard)
+          regex: "\\b(?:4[0-9]{3}(?:[ -]?[0-9]{4}){3}|5[1-5][0-9]{2}(?:[ -]?[0-9]{4}){3})\\b"
+          score: 0.95
+      context: ["carte", "visa", "mastercard"]
       
     - name: IbanRecognizer
       supported_language: fr
@@ -73,19 +84,11 @@ recognizer_registry:
       supported_entity: SWIFT_CODE
       patterns:
         - name: BIC/SWIFT Code
-          regex: "\\b[A-Z]{6}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\\b"
+          regex: "\\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\\b"
           score: 1.0
       context: ["bic", "swift"]
 
-    - name: SmartOrganizationRecognizer
-      supported_language: fr
-      supported_entity: ORGANIZATION
-      patterns:
-        - name: Company Name with Legal Form
-          regex: "\\b([A-Z][a-zà-ÿ]+(?:\\s[A-Z][a-zà-ÿ]+)*)\\s+(SPRL|SARL|SA|SCS|SNC)\\b"
-          score: 1.0
-      context: ["société", "entreprise"]
-
+    # --- NUMÉROS D'IDENTIFICATION ---
     - name: BelgianEnterpriseRecognizer
       supported_language: fr
       supported_entity: BE_ENTERPRISE_NUMBER
@@ -106,7 +109,7 @@ recognizer_registry:
           regex: "\\b[12]\\s*[0-9]{2}\\s*(?:0[1-9]|1[0-2])\\s*(?:2[ABab]|[0-9]{2})\\s*[0-9]{3}\\s*[0-9]{3}\\s*[0-9]{2}\\b"
           score: 0.95
       context: ["sécurité sociale", "insee", "nir"]
-    
+
 # 3. LISTE D'EXCLUSION (ALLOW LIST)
 # =====================================================================
 allow_list:
@@ -162,11 +165,11 @@ anonymizer_config:
     LOCATION: replace
     ORGANIZATION: replace
     DATE_TIME: replace 
-    CREDIT_CARD_NUMBER: replace # Détecteur par défaut de Presidio
-    MONEY: replace # Détecteur par défaut de Presidio
+    MONEY: replace
 
-    # Entités détectées par nos règles personnalisées
+    # Entités détectées par nos règles personnalisées (y compris la carte de crédit)
     CUSTOM_DATE: replace
+    CREDIT_CARD_NUMBER: replace 
     EMAIL_ADDRESS: replace
     PHONE_NUMBER: replace
     IBAN: replace
@@ -180,9 +183,9 @@ anonymizer_config:
     LOCATION: "<LIEU>"
     ORGANIZATION: "<ORGANISATION>"
     DATE_TIME: "<DATE>"
+    MONEY: "<MONTANT>"
     CUSTOM_DATE: "<DATE>"
     CREDIT_CARD_NUMBER: "<NUMERO_CARTE_BANCAIRE>"
-    MONEY: "<MONTANT>"
     EMAIL_ADDRESS: "<EMAIL>"
     PHONE_NUMBER: "<TELEPHONE>"
     IBAN: "<IBAN>"
