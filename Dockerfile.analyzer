@@ -4,22 +4,27 @@ FROM python:3.9-slim-bookworm
 # Définir le répertoire de travail dans le conteneur
 WORKDIR /app
 
-# **** AJOUT IMPORTANT : Installer les dépendances de compilation ****
-# build-essential contient gcc, g++, make, etc.
-# python3-dev contient les en-têtes nécessaires pour compiler des extensions Python.
+# ---- OPTIMISATION DU CACHE DOCKER ----
+# 1. Installer les dépendances système et de build
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copier tous les fichiers du projet (app.py, requirements.txt, conf/, etc.) dans le WORKDIR
-COPY . /app/
+# 2. Copier UNIQUEMENT le fichier requirements.txt
+COPY requirements.txt .
 
-# Installer les dépendances Python listées dans requirements.txt
+# 3. Installer les dépendances Python. Cette couche sera mise en cache
+# et ne sera pas ré-exécutée si requirements.txt ne change pas.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Télécharger et installer le modèle de langue français pour spaCy
+# 4. Télécharger et installer le modèle de langue français pour spaCy
 RUN python -m spacy download fr_core_news_sm
+
+# 5. Copier le reste du code de l'application
+# Si vous ne changez que le code de l'app, le pip install ne sera pas refait.
+COPY . /app/
+# ---- FIN DE L'OPTIMISATION ----
 
 # Définir la variable d'environnement pour que Presidio trouve notre fichier de configuration
 ENV PRESIDIO_ANALYZER_CONFIG_FILE=/app/conf/default.yaml
