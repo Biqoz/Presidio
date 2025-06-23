@@ -9,22 +9,22 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir \
     https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Copier et installer requirements.txt (qui contient maintenant gunicorn, pyyaml etc.)
+# Copier et installer requirements.txt (qui contient gunicorn, pyyaml etc.)
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# **** CORRECTION DES CHEMINS DE COPIE ET WORKDIR/PYTHONPATH ****
-
 # Définir le WORKDIR AVANT de copier les fichiers spécifiques à Presidio
-# C'est important pour les chemins relatifs et pour le PYTHONPATH implicite.
 WORKDIR /usr/bin/presidio-analyzer
 
 # Copier votre fichier default.yaml au bon endroit relatif au WORKDIR
-# Si le chemin absolu est /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
-# et que WORKDIR est /usr/bin/presidio-analyzer, alors le chemin relatif est presidio_analyzer/conf/default.yaml
 COPY default.yaml presidio_analyzer/conf/default.yaml
 
 # Copier le dossier de vos recognizers Python au bon endroit relatif au WORKDIR
-# Pour que 'custom_recognizers' soit un module de haut niveau directement dans le PYTHONPATH
 COPY custom_recognizers custom_recognizers
 
+# **** REMETTRE CETTE LIGNE ****
+# S'assurer que le répertoire de travail est bien dans le PYTHONPATH
+ENV PYTHONPATH=/usr/bin/presidio-analyzer:$PYTHONPATH
+
+# Commande de démarrage finale
+CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:3000", "presidio_analyzer.app:app"]
