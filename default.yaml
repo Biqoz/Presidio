@@ -28,8 +28,7 @@ ner_model_configuration:
 recognizer_registry:
   # Charger d'abord les détecteurs par défaut
   - default
-  # Puis ajouter nos détecteurs personnalisés
-  - presidio_config.custom_recognizers.custom_recognizers
+
 
 # Liste des mots à ignorer (faux positifs courants)
 allow_list:
