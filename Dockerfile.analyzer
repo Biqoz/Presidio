@@ -29,7 +29,9 @@ COPY . /app/
 # ---- FIN DE L'OPTIMISATION ----
 
 # Définir la variable d'environnement pour que Presidio trouve notre fichier de configuration
-COPY ./conf/default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
+
+# Dit à Presidio : "Ton fichier de config est ici"
+ENV PRESIDIO_ANALYZER_CONFIG_FILE=/app/conf/default.yaml
 
 # Exposer le port que Gunicorn va utiliser
 EXPOSE 5001
