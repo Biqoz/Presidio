@@ -19,7 +19,7 @@ analyzer = None
 try:
     logger.info("--- Presidio Analyzer Service Starting ---")
     
-    # 1. Charger la configuration depuis le fichier YAML
+    # 1. Charger la configuration
     CONFIG_FILE_PATH = os.environ.get("PRESIDIO_ANALYZER_CONFIG_FILE", "conf/default.yaml")
     logger.info(f"Loading configuration from: {CONFIG_FILE_PATH}")
     with open(CONFIG_FILE_PATH, 'r', encoding='utf-8') as f:
@@ -30,55 +30,52 @@ try:
     logger.info("Creating NLP engine provider...")
     provider = NlpEngineProvider(nlp_configuration=config)
     
-    # 3. Créer un registre et le peupler SEULEMENT avec les détecteurs français
-    logger.info("Creating and populating a French-first RecognizerRegistry...")
+    # 3. Créer et VIDER le registre pour garantir une base saine
+    logger.info("Creating a new RecognizerRegistry...")
     registry = RecognizerRegistry()
+    logger.info(f"Initial registry state supports: {registry.supported_languages}")
     
-    # Charger les recognizers personnalisés (définis sous la clé 'recognizers')
-    custom_recognizers_conf = config.get("recognizers", [])
-    for recognizer_conf in custom_recognizers_conf:
-        # On s'assure de ne charger que les détecteurs prévus pour le français
-        if recognizer_conf.get('supported_language') == 'fr':
-            patterns = [Pattern(name=p['name'], regex=p['regex'], score=p['score']) for p in recognizer_conf['patterns']]
-            custom_recognizer = PatternRecognizer(
-                supported_entity=recognizer_conf['entity_name'],
-                name=recognizer_conf['name'],
-                supported_language='fr',
-                patterns=patterns,
-                context=recognizer_conf.get('context')
-            )
-            registry.add_recognizer(custom_recognizer)
-            logger.info(f"Loaded and registered custom FRENCH recognizer: {custom_recognizer.name}")
+    # === CORRECTION DÉFINITIVE : VIDER LE REGISTRE ===
+    registry.recognizers.clear()
+    logger.info(f"Registry cleared. Now supports: {registry.supported_languages}")
+    
+    # 4. Ajouter les détecteurs requis
+    # Ajouter les détecteurs personnalisés pour le français
+    for recognizer_conf in config.get("recognizers", []):
+        patterns = [Pattern(name=p['name'], regex=p['regex'], score=p['score']) for p in recognizer_conf['patterns']]
+        registry.add_recognizer(PatternRecognizer(
+            supported_entity=recognizer_conf['entity_name'],
+            name=recognizer_conf['name'],
+            supported_language=recognizer_conf['supported_language'],
+            patterns=patterns,
+            context=recognizer_conf.get('context')
+        ))
+        logger.info(f"Added custom recognizer: {recognizer_conf['name']}")
 
-    # Ajouter le support de base pour les entités françaises (PERSON, LOC) via Spacy
+    # Ajouter le support des entités de base (PERSON, LOC) pour les deux langues
+    registry.add_recognizer(SpacyRecognizer(supported_language="en"))
     registry.add_recognizer(SpacyRecognizer(supported_language="fr"))
-    logger.info("Registered SpacyRecognizer for 'fr'.")
-    logger.info(f"Registry state post-french setup. Supported languages: {registry.supported_languages}")
+    logger.info("Added SpacyRecognizer for 'en' and 'fr'.")
 
-    # 4. Créer l'AnalyzerEngine
+    logger.info(f"Final registry state. Now supports: {registry.supported_languages}")
+
+    # 5. Créer l'AnalyzerEngine
     logger.info("Initializing AnalyzerEngine...")
     analyzer = AnalyzerEngine(
         nlp_engine=provider.create_engine(),
         registry=registry,
-        supported_languages=config.get("supported_languages", ["en", "fr"]),
-        # === CORRECTION DÉFINITIVE ===
-        # On empêche le moteur de créer un SpacyRecognizer anglais par défaut
-        # en lui fournissant un nous-mêmes. Il l'ajoutera au registre.
-        default_recognizer=SpacyRecognizer(supported_language="en")
+        supported_languages=config.get("supported_languages")
     )
     
     analyzer.set_allow_list(config.get("allow_list", []))
 
     logger.info("--- Presidio Analyzer Service Ready ---")
-    logger.info(f"Final registry languages: {registry.supported_languages}")
-    logger.info(f"Analyzer supported languages: {analyzer.supported_languages}")
-
 
 except Exception as e:
     logger.exception("FATAL: Error during AnalyzerEngine initialization.")
     analyzer = None 
 
-# Le reste du fichier Flask reste identique...
+# Le reste du fichier Flask est identique
 @app.route('/analyze', methods=['POST'])
 def analyze_text():
     if not analyzer: return jsonify({"error": "Analyzer engine is not available."}), 500
