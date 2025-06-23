@@ -1,11 +1,9 @@
 import os
 import logging
-import yaml
 from flask import Flask, request, jsonify, make_response
 
-from presidio_analyzer import AnalyzerEngine, RecognizerRegistry, PatternRecognizer, Pattern
-from presidio_analyzer.nlp_engine import NlpEngineProvider
-from presidio_analyzer.predefined_recognizers import SpacyRecognizer
+# On importe UNIQUEMENT le Provider, c'est lui qui gère tout.
+from presidio_analyzer import AnalyzerEngineProvider
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -14,60 +12,27 @@ logger = logging.getLogger(__name__)
 # Initialisation de l'application Flask
 app = Flask(__name__)
 
-# --- Initialisation Globale de l'Analyseur ---
+# --- Initialisation Globale de l'Analyseur via le Provider ---
 analyzer = None
 try:
     logger.info("--- Presidio Analyzer Service Starting ---")
     
-    # 1. Charger la configuration
+    # Le chemin vers le fichier de configuration est toujours défini par la variable d'environnement
     CONFIG_FILE_PATH = os.environ.get("PRESIDIO_ANALYZER_CONFIG_FILE", "conf/default.yaml")
-    logger.info(f"Loading configuration from: {CONFIG_FILE_PATH}")
-    with open(CONFIG_FILE_PATH, 'r', encoding='utf-8') as f:
-        config = yaml.safe_load(f)
-    logger.info("Configuration file loaded successfully.")
-
-    # 2. Créer le fournisseur de moteur NLP
-    logger.info("Creating NLP engine provider...")
-    provider = NlpEngineProvider(nlp_configuration=config)
     
-    # 3. Créer le registre. Il contient déjà les détecteurs anglais par défaut.
-    logger.info("Creating RecognizerRegistry (with default EN recognizers)...")
-    registry = RecognizerRegistry()
-    logger.info(f"Initial registry state supports: {registry.supported_languages}")
+    # On utilise le Provider pour lire le fichier et créer le moteur
+    # C'est la méthode officielle et robuste.
+    provider = AnalyzerEngineProvider(analyzer_engine_conf_file=CONFIG_FILE_PATH)
+    analyzer = provider.create_engine()
     
-    # 4. AJOUTER les détecteurs français à ce registre existant
-    logger.info("Adding French recognizers to the existing registry...")
-
-    # Ajouter le support des entités de base (PERSON, LOC) pour le français
-    registry.add_recognizer(SpacyRecognizer(supported_language="fr"))
-    logger.info("Added SpacyRecognizer for 'fr'.")
-
-    # Ajouter tous vos détecteurs personnalisés (qui sont pour 'fr')
-    for recognizer_conf in config.get("recognizers", []):
-        patterns = [Pattern(name=p['name'], regex=p['regex'], score=p['score']) for p in recognizer_conf['patterns']]
-        registry.add_recognizer(PatternRecognizer(
-            supported_entity=recognizer_conf['entity_name'],
-            name=recognizer_conf['name'],
-            supported_language=recognizer_conf['supported_language'],
-            patterns=patterns,
-            context=recognizer_conf.get('context')
-        ))
-        logger.info(f"Added custom recognizer '{recognizer_conf['name']}' for language 'fr'")
-
-    logger.info(f"Final registry state. Should now support: {registry.supported_languages}")
-
-    # 5. Créer l'AnalyzerEngine
-    logger.info("Initializing AnalyzerEngine...")
-    analyzer = AnalyzerEngine(
-        nlp_engine=provider.create_engine(),
-        registry=registry,
-        supported_languages=config.get("supported_languages")
-    )
-    
-    analyzer.set_allow_list(config.get("allow_list", []))
+    # L'allow_list est aussi gérée par le provider, mais on peut la surcharger si besoin
+    # from presidio_analyzer.store import AllowListStore
+    # allow_list_store = AllowListStore()
+    # allow_list_store.set_allow_list(provider.get_configuration().get("allow_list", []))
+    # analyzer.allow_list_store = allow_list_store
 
     logger.info("--- Presidio Analyzer Service Ready ---")
-    logger.info(f"SUCCESS: Final analyzer languages are: {analyzer.supported_languages}")
+    logger.info(f"Analyzer created successfully, supporting languages: {analyzer.supported_languages}")
 
 except Exception as e:
     logger.exception("FATAL: Error during AnalyzerEngine initialization.")
@@ -76,16 +41,29 @@ except Exception as e:
 # Le reste du fichier Flask est identique
 @app.route('/analyze', methods=['POST'])
 def analyze_text():
-    if not analyzer: return jsonify({"error": "Analyzer engine is not available."}), 500
+    if not analyzer:
+        return jsonify({"error": "Analyzer engine is not available. Check startup logs."}), 500
+    
     try:
         data = request.get_json(force=True)
-        text = data.get("text", "")
-        lang = data.get("language", "fr")
-        if not text: return jsonify({"error": "text field is missing"}), 400
-        results = analyzer.analyze(text=text, language=lang)
-        return make_response(jsonify([res.to_dict() for res in results]), 200)
+        text_to_analyze = data.get("text", "")
+        language = data.get("language", "fr")
+
+        if not text_to_analyze:
+             return jsonify({"error": "text field is missing or empty"}), 400
+        
+        results = analyzer.analyze(
+            text=text_to_analyze,
+            language=language
+        )
+        
+        response_data = [res.to_dict() for res in results]
+        return make_response(jsonify(response_data), 200)
+
     except Exception as e:
-        logger.exception("Error during analysis request.")
+        logger.exception(f"Error during analysis for language '{language}'.")
+        if "No matching recognizers" in str(e):
+             return jsonify({"error": f"No recognizers available for language '{language}'."}), 400
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
