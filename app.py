@@ -30,17 +30,20 @@ try:
     logger.info("Creating NLP engine provider...")
     provider = NlpEngineProvider(nlp_configuration=config)
     
-    # 3. Créer et VIDER le registre pour garantir une base saine
+    # 3. Créer un registre et le VIDER immédiatement
     logger.info("Creating a new RecognizerRegistry...")
     registry = RecognizerRegistry()
     logger.info(f"Initial registry state supports: {registry.supported_languages}")
     
-    # === CORRECTION DÉFINITIVE : VIDER LE REGISTRE ===
+    # === LA CORRECTION DÉFINITIVE ===
+    # On vide la liste interne pour enlever le détecteur anglais par défaut.
     registry.recognizers.clear()
     logger.info(f"Registry cleared. Now supports: {registry.supported_languages}")
     
-    # 4. Ajouter les détecteurs requis
-    # Ajouter les détecteurs personnalisés pour le français
+    # 4. Reconstruire le registre à partir de zéro
+    logger.info("Rebuilding registry from scratch...")
+    
+    # D'abord, ajouter tous vos détecteurs personnalisés (qui sont surtout pour 'fr')
     for recognizer_conf in config.get("recognizers", []):
         patterns = [Pattern(name=p['name'], regex=p['regex'], score=p['score']) for p in recognizer_conf['patterns']]
         registry.add_recognizer(PatternRecognizer(
@@ -50,16 +53,17 @@ try:
             patterns=patterns,
             context=recognizer_conf.get('context')
         ))
-        logger.info(f"Added custom recognizer: {recognizer_conf['name']}")
+        logger.info(f"Added custom recognizer '{recognizer_conf['name']}' for language '{recognizer_conf['supported_language']}'")
 
-    # Ajouter le support des entités de base (PERSON, LOC) pour les deux langues
+    # Ensuite, ajouter le support des entités de base (PERSON, LOC) pour les DEUX langues
     registry.add_recognizer(SpacyRecognizer(supported_language="en"))
+    logger.info("Added SpacyRecognizer for 'en'.")
     registry.add_recognizer(SpacyRecognizer(supported_language="fr"))
-    logger.info("Added SpacyRecognizer for 'en' and 'fr'.")
+    logger.info("Added SpacyRecognizer for 'fr'.")
 
-    logger.info(f"Final registry state. Now supports: {registry.supported_languages}")
+    logger.info(f"Final registry state. Should now support: {registry.supported_languages}")
 
-    # 5. Créer l'AnalyzerEngine
+    # 5. Créer l'AnalyzerEngine avec le registre maintenant cohérent
     logger.info("Initializing AnalyzerEngine...")
     analyzer = AnalyzerEngine(
         nlp_engine=provider.create_engine(),
@@ -70,6 +74,8 @@ try:
     analyzer.set_allow_list(config.get("allow_list", []))
 
     logger.info("--- Presidio Analyzer Service Ready ---")
+    logger.info(f"Final analyzer languages: {analyzer.supported_languages}")
+
 
 except Exception as e:
     logger.exception("FATAL: Error during AnalyzerEngine initialization.")
