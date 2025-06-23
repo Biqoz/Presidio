@@ -6,8 +6,8 @@ from flask import Flask, request, jsonify, make_response
 # Import des classes nécessaires de Presidio
 from presidio_analyzer import AnalyzerEngine, RecognizerRegistry, PatternRecognizer, Pattern
 from presidio_analyzer.nlp_engine import NlpEngineProvider
-from presidio_analyzer.recognizer_registry.recognizer_registry import RecognizerRegistry
-from presidio_analyzer.recognizer_registry.deny_list_recognizer import DenyListRecognizer
+# --- CORRECTION DE L'IMPORT ICI ---
+from presidio_analyzer.predefined_recognizers import DenyListRecognizer 
 
 # Configuration du logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -43,7 +43,6 @@ custom_recognizers_conf = config.get("recognizers", [])
 for recognizer_conf in custom_recognizers_conf:
     patterns = [Pattern(name=p['name'], regex=p['regex'], score=p['score']) for p in recognizer_conf['patterns']]
     
-    # On crée une instance de PatternRecognizer
     custom_recognizer = PatternRecognizer(
         supported_entity=recognizer_conf['entity_name'],
         name=recognizer_conf['name'],
@@ -52,8 +51,6 @@ for recognizer_conf in custom_recognizers_conf:
         context=recognizer_conf.get('context')
     )
     
-    # --- CORRECTION DE LA LIGNE D'ERREUR ---
-    # La méthode correcte est 'add_recognizer', pas 'add_pattern_recognizer'
     registry.add_recognizer(custom_recognizer)
     logger.info(f"Loaded custom recognizer: {custom_recognizer.name}")
 
@@ -68,7 +65,7 @@ if allow_list_terms:
 # Initialisation de l'application Flask
 app = Flask(__name__)
 
-# Initialisation du moteur Presidio Analyzer avec nos composants créés
+# Initialisation du moteur Presidio Analyzer
 logger.info("Initializing AnalyzerEngine with custom configuration...")
 analyzer = AnalyzerEngine(
     nlp_engine=nlp_engine,
@@ -88,7 +85,11 @@ def analyze_text():
         if not text_to_analyze:
              return jsonify({"error": "text field is missing or empty"}), 400
         
-        results = analyzer.analyze(text=text_to_analyze, language=language)
+        results = analyzer.analyze(
+            text=text_to_analyze,
+            language=language
+        )
+        
         response_data = [res.to_dict() for res in results]
         return make_response(jsonify(response_data), 200)
     except Exception as e:
