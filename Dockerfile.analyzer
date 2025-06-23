@@ -19,7 +19,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # 4. Télécharger et installer les modèles de langue pour spaCy
-RUN python -m spacy download fr_core_news_sm
+RUN python -m spacy download fr_core_news_lg
 # CORRECTION : Ajout du téléchargement du modèle anglais
 RUN python -m spacy download en_core_web_lg
 
