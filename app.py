@@ -30,43 +30,49 @@ try:
     logger.info("Creating NLP engine provider...")
     provider = NlpEngineProvider(nlp_configuration=config)
     
-    # 3. Créer un registre de recognizers VIDE
-    logger.info("Creating a clean RecognizerRegistry...")
+    # 3. Créer un registre et le peupler SEULEMENT avec les détecteurs français
+    logger.info("Creating and populating a French-first RecognizerRegistry...")
     registry = RecognizerRegistry()
     
-    # 4. Charger les recognizers personnalisés (définis sous la clé 'recognizers')
-    logger.info("Loading custom recognizers from YAML...")
+    # Charger les recognizers personnalisés (définis sous la clé 'recognizers')
     custom_recognizers_conf = config.get("recognizers", [])
     for recognizer_conf in custom_recognizers_conf:
-        patterns = [Pattern(name=p['name'], regex=p['regex'], score=p['score']) for p in recognizer_conf['patterns']]
-        custom_recognizer = PatternRecognizer(
-            supported_entity=recognizer_conf['entity_name'],
-            name=recognizer_conf['name'],
-            supported_language=recognizer_conf['supported_language'],
-            patterns=patterns,
-            context=recognizer_conf.get('context')
-        )
-        # On ajoute UNIQUEMENT les détecteurs customs définis pour le français
-        if recognizer_conf['supported_language'] == 'fr':
+        # On s'assure de ne charger que les détecteurs prévus pour le français
+        if recognizer_conf.get('supported_language') == 'fr':
+            patterns = [Pattern(name=p['name'], regex=p['regex'], score=p['score']) for p in recognizer_conf['patterns']]
+            custom_recognizer = PatternRecognizer(
+                supported_entity=recognizer_conf['entity_name'],
+                name=recognizer_conf['name'],
+                supported_language='fr',
+                patterns=patterns,
+                context=recognizer_conf.get('context')
+            )
             registry.add_recognizer(custom_recognizer)
-            logger.info(f"Loaded and registered custom recognizer: {custom_recognizer.name}")
+            logger.info(f"Loaded and registered custom FRENCH recognizer: {custom_recognizer.name}")
 
-    # 5. Ajouter le SpacyRecognizer, qui est un cas spécial pour les entités de base
-    registry.add_recognizer(SpacyRecognizer(supported_language="en"))
+    # Ajouter le support de base pour les entités françaises (PERSON, LOC) via Spacy
     registry.add_recognizer(SpacyRecognizer(supported_language="fr"))
-    logger.info("Registered SpacyRecognizer for 'en' and 'fr'.")
+    logger.info("Registered SpacyRecognizer for 'fr'.")
+    logger.info(f"Registry state post-french setup. Supported languages: {registry.supported_languages}")
 
-    # 6. Créer l'AnalyzerEngine
-    logger.info("Initializing AnalyzerEngine with custom components...")
+    # 4. Créer l'AnalyzerEngine
+    logger.info("Initializing AnalyzerEngine...")
     analyzer = AnalyzerEngine(
         nlp_engine=provider.create_engine(),
         registry=registry,
-        supported_languages=config.get("supported_languages", ["en", "fr"])
+        supported_languages=config.get("supported_languages", ["en", "fr"]),
+        # === CORRECTION DÉFINITIVE ===
+        # On empêche le moteur de créer un SpacyRecognizer anglais par défaut
+        # en lui fournissant un nous-mêmes. Il l'ajoutera au registre.
+        default_recognizer=SpacyRecognizer(supported_language="en")
     )
+    
     analyzer.set_allow_list(config.get("allow_list", []))
 
     logger.info("--- Presidio Analyzer Service Ready ---")
-    logger.info(f"Final supported languages in registry: {registry.supported_languages}")
+    logger.info(f"Final registry languages: {registry.supported_languages}")
+    logger.info(f"Analyzer supported languages: {analyzer.supported_languages}")
+
 
 except Exception as e:
     logger.exception("FATAL: Error during AnalyzerEngine initialization.")
