@@ -1,27 +1,44 @@
+# Utilise l'image de base officielle de Presidio Analyzer
 FROM mcr.microsoft.com/presidio-analyzer:latest
 
+# Passe l'utilisateur à root pour pouvoir installer des paquets et copier des fichiers
 USER root
 
-# Installer les dépendances système
+# Met à jour la liste des paquets et installe 'curl' (utile pour certains téléchargements, bien que non strictement nécessaire pour Presidio)
+# et nettoie le cache APT pour réduire la taille de l'image.
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
-# Installer le modèle spaCy français
+# Installe le modèle linguistique français de spaCy.
+# Ce modèle est requis pour la détection en français.
 RUN pip install --no-cache-dir \
     https://github.com/explosion/spacy-models/releases/download/fr_core_news_sm-3.7.0/fr_core_news_sm-3.7.0-py3-none-any.whl
 
-# Copier et installer requirements.txt
+# Copie le fichier requirements.txt de l'hôte vers un dossier temporaire dans le conteneur.
+# Ensuite, installe toutes les dépendances listées dans ce fichier.
+# Cela inclut gunicorn, pyyaml, et d'autres dépendances nécessaires au bon fonctionnement de Presidio.
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Définir le WORKDIR sur le répertoire parent de presidio_analyzer
-WORKDIR /usr/bin
+# Définit le répertoire de travail pour les commandes suivantes dans le Dockerfile et pour le conteneur démarré.
+# Ce chemin (/usr/bin/presidio-analyzer) est l'emplacement où l'application Presidio Analyzer est pré-installée
+# ou s'attend à trouver ses fichiers internes dans l'image de base.
+WORKDIR /usr/bin/presidio-analyzer
 
-# Copier vos fichiers de configuration au bon endroit
-COPY default.yaml /usr/bin/presidio-analyzer/presidio_analyzer/conf/default.yaml
-COPY custom_recognizers /usr/bin/presidio-analyzer/custom_recognizers
+# Copie votre fichier de configuration default.yaml personnalisé.
+# Source : 'conf/default.yaml' sur votre hôte (relatif au contexte de build).
+# Destination : 'presidio_analyzer/conf/default.yaml' dans le conteneur (relatif au WORKDIR).
+# Cela place votre configuration personnalisée à l'endroit où Presidio Analyzer la cherchera.
+COPY conf/default.yaml presidio_analyzer/conf/default.yaml
 
-# Ajouter le répertoire presidio-analyzer au PYTHONPATH
-ENV PYTHONPATH=/usr/bin/presidio-analyzer:$PYTHONPATH
+# Copie votre dossier de recognizers Python personnalisés.
+# Source : 'custom_recognizers' sur votre hôte (relatif au contexte de build).
+# Destination : 'custom_recognizers' dans le conteneur (relatif au WORKDIR).
+# Cela permet à Presidio de trouver et de charger vos recognizers via la configuration YAML.
+COPY custom_recognizers custom_recognizers
 
-# Commande de démarrage avec le bon répertoire de travail
+# La commande finale que Docker exécutera lorsque le conteneur démarre.
+# 'gunicorn' est le serveur web, '-w 1' pour 1 worker, '-b 0.0.0.0:3000' pour écouter sur le port 3000.
+# 'presidio_analyzer.app:app' indique à gunicorn de lancer l'application Flask nommée 'app'
+# qui se trouve dans le module 'app.py' du package 'presidio_analyzer'.
+# Cette commande s'appuie sur la structure interne de l'installation Presidio dans l'image de base.
 CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:3000", "presidio_analyzer.app:app"]
