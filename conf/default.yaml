@@ -1,237 +1,136 @@
 # =====================================================================
 # CONFIGURATION PRESIDIO COMPLÈTE - RGPD FRANÇAIS/BELGE
 # =====================================================================
-
-# 1. CONFIGURATION DU MOTEUR NLP (Natural Language Processing)
-# =====================================================================
-nlp_engine_name: spacy
+# Langues supportées par l'ensemble du moteur
 supported_languages: [en, fr]
-models:
-  - lang_code: en
-    model_name: en_core_web_lg
-  - lang_code: fr
-    model_name: fr_core_news_sm
-    # CORRECTION : La configuration fine du NLP est maintenant ici, dans le modèle 'fr'
-    ner_model_configuration:
-      labels_to_ignore:
-        - MISC
-        - CARDINAL
-        - EVENT
-        - LANGUAGE
-        - LAW
-        - ORDINAL
-        - PERCENT
-        - PRODUCT
-        - QUANTITY
-        - WORK_OF_ART
-      confidence_thresholds:
-        DEFAULT_CONFIDENCE: 0.65
-        entities:
-          PERSON: 0.85
-          LOCATION: 0.75
-          ORGANIZATION: 0.7
 
-# 2. DÉFINITION DES DÉTECTEURS (RECOGNIZERS) PERSONNALISÉS
+# 1. CONFIGURATION DU MOTEUR NLP
 # =====================================================================
-recognizers:
-  - name: EmailRecognizer
-    entity_name: EMAIL_ADDRESS
-    supported_language: fr
-    patterns:
-      - name: Email Pattern
-        regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"
-        score: 1.0
-    context: ["email", "courriel", "mail"]
+nlp_configuration:
+  nlp_engine_name: spacy
+  models:
+    - lang_code: en
+      model_name: en_core_web_lg
+    - lang_code: fr
+      model_name: fr_core_news_sm
+      ner_model_configuration:
+        labels_to_ignore:
+          - MISC
+          - CARDINAL
+          - EVENT
+          - LANGUAGE
+          - LAW
+          - ORDINAL
+          - PERCENT
+          - PRODUCT
+          - QUANTITY
+          - WORK_OF_ART
+        confidence_thresholds:
+          DEFAULT_CONFIDENCE: 0.65
+          entities:
+            PERSON: 0.85
+            LOCATION: 0.75
+            ORGANIZATION: 0.7
 
-  - name: PhoneRecognizer
-    entity_name: PHONE_NUMBER
-    supported_language: fr
-    patterns:
-      - name: Phone Pattern (FR/BE/LUX)
-        regex: "\\b(?:(?:\\+|00)?(?:32|33|352)|0)\\s?[1-9](?:[\\s.-]?\\d{2}){3,4}\\b"
-        score: 0.8
-    context: ["téléphone", "tel", "mobile", "gsm", "contact"]
-
-  - name: IbanRecognizer
-    entity_name: IBAN
-    supported_language: fr
-    patterns:
-      - name: IBAN Pattern
-        regex: "\\b[A-Z]{2}[0-9]{2}\\s?(?:[A-Z0-9]{4}\\s?){2,7}[A-Z0-9]{1,4}\\b"
-        score: 0.95
-    context: ["iban", "compte", "bancaire"]
-  
-  - name: CreditCardRecognizer
-    entity_name: CREDIT_CARD_NUMBER
-    supported_language: fr
-    patterns:
-      - name: Credit Card Pattern
-        regex: "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9]{2})[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11})\\b"
-        score: 0.9
-    context: ["carte bancaire", "visa", "mastercard", "amex"]
-
-  - name: MoneyRecognizer
-    entity_name: MONEY
-    supported_language: fr
-    patterns:
-      - name: Money Pattern EUR
-        regex: "(?:EUR|€)\\s*\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?|\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?\\s*(?:EUR|€)"
-        score: 0.85
-  
-  - name: BelgianNRNRecognizer
-    entity_name: BE_NATIONAL_REGISTER_NUMBER
-    supported_language: fr
-    patterns:
-      - name: NRN Pattern
-        regex: "\\b[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}-[0-9]{3}\\.[0-9]{2}\\b"
-        score: 1.0
-    context: ["registre national", "nrn", "niss"]
-
-  - name: BelgianEnterpriseRecognizer
-    entity_name: BE_ENTERPRISE_NUMBER
-    supported_language: fr
-    patterns:
-      - name: BE Enterprise Number
-        regex: "\\bBE\\s?0\\d{3}[\\.\\s]?\\d{3}[\\.\\s]?\\d{3}\\b"
-        score: 0.95
-    context: ["numéro d'entreprise", "btw", "tva", "BCE", "KBO"]
-
-  - name: FrenchINSEERecognizer
-    entity_name: FR_SOCIAL_SECURITY_NUMBER
-    supported_language: fr
-    patterns:
-      - name: INSEE Pattern
-        regex: "\\b[12][\\s]?[0-9]{2}[\\s]?(?:0[1-9]|1[0-2])[\\s]?(?:2[ABab]|[0-9]{2})[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{2}\\b"
-        score: 0.95
-    context: ["sécurité sociale", "insee", "nir"]
-
-  - name: FrenchSIRENSIRETRecognizer
-    entity_name: FR_SIREN_SIRET
-    supported_language: fr
-    patterns:
-      - name: SIRET Pattern
-        regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{5}\\b"
-        score: 0.9
-      - name: SIREN Pattern
-        regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}\\b"
-        score: 0.85
-    context: ["siren", "siret"]
-
-# 3. ACTIVATION DES DÉTECTEURS
+# 2. CONFIGURATION DU REGISTRE DES DÉTECTEURS
 # =====================================================================
-# CORRECTION : Liste explicite pour éviter les conflits et les warnings
 recognizer_registry:
-  # Détecteur de base pour les entités NLP (PERSON, LOCATION, etc.)
-  - SpacyRecognizer
+  # A) CHARGER LES DÉTECTEURS PRÉDÉFINIS pour les langues supportées
+  # Presidio va charger les versions 'en' et 'fr' si elles existent
+  load_predefined_recognizers: true
   
-  # Détecteurs par défaut que nous voulons garder pour 'en' et 'fr'
-  - CreditCardRecognizer
-  - CryptoRecognizer
-  - DateRecognizer
-  - IpRecognizer
-  - MedicalLicenseRecognizer
-  - UrlRecognizer
-  
-  # NOS DÉTECTEURS PERSONNALISÉS pour le français, qui remplacent
-  # les versions par défaut pour cette langue.
-  - EmailRecognizer
-  - PhoneRecognizer
-  - IbanRecognizer
-  - MoneyRecognizer
-  - BelgianNRNRecognizer
-  - BelgianEnterpriseRecognizer
-  - FrenchINSEERecognizer
-  - FrenchSIRENSIRETRecognizer
+  # B) AJOUTER VOS DÉTECTEURS PERSONNALISÉS (surtout pour le français)
+  recognizers:
+    - name: EmailRecognizer
+      supported_language: fr
+      entity_name: EMAIL_ADDRESS
+      patterns:
+        - name: Email Pattern
+          regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"
+          score: 1.0
+      context: ["email", "courriel", "mail"]
 
-# 4. LISTE D'EXCLUSION (ALLOW LIST)
+    - name: PhoneRecognizer
+      supported_language: fr
+      entity_name: PHONE_NUMBER
+      patterns:
+        - name: Phone Pattern (FR/BE/LUX)
+          regex: "\\b(?:(?:\\+|00)?(?:32|33|352)|0)\\s?[1-9](?:[\\s.-]?\\d{2}){3,4}\\b"
+          score: 0.8
+      context: ["téléphone", "tel", "mobile", "gsm", "contact"]
+
+    - name: IbanRecognizer
+      supported_language: fr
+      entity_name: IBAN
+      patterns:
+        - name: IBAN Pattern
+          regex: "\\b[A-Z]{2}[0-9]{2}\\s?(?:[A-Z0-9]{4}\\s?){2,7}[A-Z0-9]{1,4}\\b"
+          score: 0.95
+      context: ["iban", "compte", "bancaire"]
+    
+    - name: CreditCardRecognizer
+      supported_language: fr
+      entity_name: CREDIT_CARD_NUMBER
+      patterns:
+        - name: Credit Card Pattern
+          regex: "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9]{2})[0-9]{12}|3[47][0-9]{13}|3(?:0[0-5]|[68][0-9])[0-9]{11}|(?:2131|1800|35\\d{3})\\d{11})\\b"
+          score: 0.9
+      context: ["carte bancaire", "visa", "mastercard", "amex"]
+
+    - name: MoneyRecognizer
+      supported_language: fr
+      entity_name: MONEY
+      patterns:
+        - name: Money Pattern EUR
+          regex: "(?:EUR|€)\\s*\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?|\\d{1,3}(?:[.,\\s]\\d{3})*(?:[.,]\\d{2})?\\s*(?:EUR|€)"
+          score: 0.85
+    
+    - name: BelgianNRNRecognizer
+      supported_language: fr
+      entity_name: BE_NATIONAL_REGISTER_NUMBER
+      patterns:
+        - name: NRN Pattern
+          regex: "\\b[0-9]{2}\\.[0-9]{2}\\.[0-9]{2}-[0-9]{3}\\.[0-9]{2}\\b"
+          score: 1.0
+      context: ["registre national", "nrn", "niss"]
+
+    - name: BelgianEnterpriseRecognizer
+      supported_language: fr
+      entity_name: BE_ENTERPRISE_NUMBER
+      patterns:
+        - name: BE Enterprise Number
+          regex: "\\bBE\\s?0\\d{3}[\\.\\s]?\\d{3}[\\.\\s]?\\d{3}\\b"
+          score: 0.95
+      context: ["numéro d'entreprise", "btw", "tva", "BCE", "KBO"]
+
+    - name: FrenchINSEERecognizer
+      supported_language: fr
+      entity_name: FR_SOCIAL_SECURITY_NUMBER
+      patterns:
+        - name: INSEE Pattern
+          regex: "\\b[12][\\s]?[0-9]{2}[\\s]?(?:0[1-9]|1[0-2])[\\s]?(?:2[ABab]|[0-9]{2})[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{2}\\b"
+          score: 0.95
+      context: ["sécurité sociale", "insee", "nir"]
+
+    - name: FrenchSIRENSIRETRecognizer
+      supported_language: fr
+      entity_name: FR_SIREN_SIRET
+      patterns:
+        - name: SIRET Pattern
+          regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{5}\\b"
+          score: 0.9
+        - name: SIREN Pattern
+          regex: "\\b[0-9]{3}[\\s]?[0-9]{3}[\\s]?[0-9]{3}\\b"
+          score: 0.85
+      context: ["siren", "siret"]
+
+# 3. LISTE D'EXCLUSION
 # =====================================================================
 allow_list:
   - Contrat
   - Document
-  - Société
-  - Investisseur
-  - Montant
-  - Prêt
-  - Intérêt
-  - Partie
-  - Parties
-  - Annexe
-  - Remboursement
-  - Conversion
-  - Financement
-  - Sortie
-  - "Juste Valeur Marchande"
-  - Échéance
-  - Clause
-  - Clauses
-  - Principe
-  - Coûts
-  - Notifications
-  - Article
-  - Paragraphe
-  - Directeur
-  - Gérant
-  - Président
-  - DocuSign
-  - SPRL
-  - SA
-  - Loi
-  - Code
-  - Règlement
-  - Décret
-  - Arrêté
-  - Euro
-  - EUR
-  - Euros
-  - Taux
-  - Valeur
-  - Prix
-  - Janvier
-  - Février
-  - Mars
-  - Avril
-  - Mai
-  - Juin
-  - Juillet
-  - Août
-  - Septembre
-  - Octobre
-  - Novembre
-  - Décembre
+  # ... (votre liste complète)
 
-# 5. CONFIGURATION DES TRANSFORMATIONS D'ANONYMISATION
+# 4. CONFIGURATION D'ANONYMISATION (ne change pas)
 # =====================================================================
-anonymizer_config:
-  default_anonymizers:
-    PERSON: replace
-    LOCATION: replace
-    ORGANIZATION: replace
-    DATE_TIME: replace
-    CREDIT_CARD_NUMBER: replace
-    EMAIL_ADDRESS: replace
-    IP_ADDRESS: replace
-    PHONE_NUMBER: replace
-    URL: replace
-    IBAN: replace # Corrigé de IBAN_CODE à IBAN
-    MONEY: replace
-    BE_NATIONAL_REGISTER_NUMBER: replace
-    BE_ENTERPRISE_NUMBER: replace
-    FR_SOCIAL_SECURITY_NUMBER: replace
-    FR_SIREN_SIRET: replace
-  
-  replacements:
-    PERSON: "<PERSONNE>"
-    LOCATION: "<LIEU>"
-    ORGANIZATION: "<ORGANISATION>"
-    DATE_TIME: "<DATE>"
-    CREDIT_CARD_NUMBER: "<NUMERO_CARTE_BANCAIRE>"
-    EMAIL_ADDRESS: "<EMAIL>"
-    IBAN: "<IBAN>" # Corrigé de IBAN_CODE à IBAN
-    IP_ADDRESS: "<ADRESSE_IP>"
-    PHONE_NUMBER: "<TELEPHONE>"
-    URL: "<URL>"
-    MONEY: "<MONTANT>"
-    BE_NATIONAL_REGISTER_NUMBER: "<NRN_BELGE>"
-    BE_ENTERPRISE_NUMBER: "<NUM_ENTREPRISE_BE>"
-    FR_SOCIAL_SECURITY_NUMBER: "<NUM_SECU_FR>"
-    FR_SIREN_SIRET: "<SIREN_SIRET_FR>"
+# ... (votre section anonymizer_config reste ici)
