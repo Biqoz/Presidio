@@ -12,7 +12,7 @@ nlp_configuration:
     - lang_code: en
       model_name: en_core_web_lg
     - lang_code: fr
-      model_name: fr_core_news_sm
+      model_name: fr_core_news_lg
       ner_model_configuration:
         labels_to_ignore:
           - MISC
