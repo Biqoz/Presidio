@@ -1,5 +1,5 @@
 # =====================================================================
-# CONFIGURATION PRESIDIO - v21 (FINALE ET CORRIGÉE)
+# CONFIGURATION PRESIDIO - v24 (FINALE, COMPLÈTE ET FIABLE)
 # =====================================================================
 supported_languages: [en, fr]
 
@@ -52,15 +52,14 @@ recognizer_registry:
       patterns: [{name: Email Pattern, regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b", score: 1.0}]
       context: ["email", "courriel", "mail"]
 
-    # --- CORRECTION FINALE : Règle Téléphone Belge Flexible ---
-    - name: BelgianPhoneRecognizer
+    # --- CORRECTION DÉFINITIVE : Création d'une entité personnalisée pour le téléphone ---
+    - name: CustomBelgianPhoneRecognizer
       supported_language: fr
-      supported_entity: PHONE_NUMBER
+      supported_entity: CUSTOM_PHONE_BE # Nouvelle entité pour éviter les conflits
       patterns:
         - name: Belgian Phone Pattern (+32 + 8 or 9 digits)
-          # Cherche +32 ou 0032, suivi par 8 ou 9 chiffres, en ignorant les séparateurs
           regex: "\\b(?:\\+|00)32(?:[\\s.-]?\\d){8,9}\\b"
-          score: 1.0 # Confiance maximale pour ne jamais le manquer
+          score: 1.0
       context: ["téléphone", "tel", "gsm", "mobile"]
       
     - name: CustomCreditCardRecognizer
@@ -179,12 +178,13 @@ anonymizer_config:
     CUSTOM_DATE: replace
     CREDIT_CARD_NUMBER: replace 
     EMAIL_ADDRESS: replace
-    PHONE_NUMBER: replace
     IBAN: replace
     BE_ENTERPRISE_NUMBER: replace
     BE_NATIONAL_REGISTER_NUMBER: replace
     FR_SOCIAL_SECURITY_NUMBER: replace
     SWIFT_CODE: replace
+    # --- CORRECTION DÉFINITIVE : On anonymise notre nouvelle entité téléphone ---
+    CUSTOM_PHONE_BE: replace
   
   replacements:
     PERSON: "<PERSONNE>"
@@ -195,9 +195,10 @@ anonymizer_config:
     CREDIT_CARD_NUMBER: "<NUMERO_CARTE_BANCAIRE>"
     MONEY: "<MONTANT>"
     EMAIL_ADDRESS: "<EMAIL>"
-    PHONE_NUMBER: "<TELEPHONE>"
     IBAN: "<IBAN>"
     BE_ENTERPRISE_NUMBER: "<NUM_ENTREPRISE_BE>"
     BE_NATIONAL_REGISTER_NUMBER: "<NRN_BELGE>"
     FR_SOCIAL_SECURITY_NUMBER: "<NUM_SECU_FR>"
     SWIFT_CODE: "<CODE_SWIFT>"
+    # --- CORRECTION DÉFINITIVE : On ajoute le token de remplacement ---
+    CUSTOM_PHONE_BE: "<TELEPHONE>"
