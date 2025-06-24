@@ -55,7 +55,7 @@ recognizer_registry:
     # --- VOTRE REGEX TÉLÉPHONE, ADAPTÉE POUR PRESIDIO ---
     - name: CustomBelgianPhoneRecognizer
       supported_language: fr
-      supported_entity: CUSTOM_PHONE_BE
+      supported_entity: BE_PHONE_NUMBER
       patterns:
         - name: Belgian Phone Pattern (votre regex adaptée)
           # J'ai doublé les backslashes et remplacé ^/$ par \b
@@ -184,7 +184,7 @@ anonymizer_config:
     BE_NATIONAL_REGISTER_NUMBER: replace
     FR_SOCIAL_SECURITY_NUMBER: replace
     SWIFT_CODE: replace
-    CUSTOM_PHONE_BE: replace
+    BE_PHONE_NUMBER: replace
   
   replacements:
     PERSON: "<PERSONNE>"
@@ -200,4 +200,4 @@ anonymizer_config:
     BE_NATIONAL_REGISTER_NUMBER: "<NRN_BELGE>"
     FR_SOCIAL_SECURITY_NUMBER: "<NUM_SECU_FR>"
     SWIFT_CODE: "<CODE_SWIFT>"
-    CUSTOM_PHONE_BE: "<TELEPHONE>"
+    BE_PHONE_NUMBER: "<BE_PHONE_NUMBER>"
