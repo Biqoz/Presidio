@@ -52,14 +52,15 @@ recognizer_registry:
       patterns: [{name: Email Pattern, regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b", score: 1.0}]
       context: ["email", "courriel", "mail"]
 
-    - name: BelgianPhoneRecognizer
+   - name: BelgianPhoneRecognizer
       supported_language: fr
       supported_entity: PHONE_NUMBER
       patterns:
-        - name: Belgian Phone Pattern (+32)
+        - name: Belgian Phone Pattern (+32 + 8 or 9 digits)
+          # Cherche +32 ou 0032, suivi par 8 ou 9 chiffres, en ignorant les séparateurs
           regex: "\\b(?:\\+|00)32(?:[\\s.-]?\\d){8,9}\\b"
-          score: 1.0
-      context: ["téléphone", "tel"]
+          score: 1.0 # Confiance maximale pour ne jamais le manquer
+      context: ["téléphone", "tel", "gsm", "mobile"]
       
     - name: CustomCreditCardRecognizer
       supported_language: fr
