@@ -59,7 +59,7 @@ recognizer_registry:
       patterns:
         - name: Belgian Phone Pattern (votre regex adaptée)
           # J'ai doublé les backslashes et remplacé ^/$ par \b
-          regex: "\\b(((\\+|00)32[ ]?(?:\\(0\\)[ ]?)?)|0){1}(4(60|[789]\\d)\\/(\\s?\\d{2}\\.?){2}(\\s?\\d{2})|(\\d\\/?\\s?\\d{3}|\\d{2}\\/?\\s?\\d{2})(\\.?\\s?\\d{2}){2})\\b"
+          regex: "\\b(((\\+|00)32[ ]?(?:\\(0\\)[ ]?)?)|0)?4\\d{2}(\\s?\\d{2}[\\s\\.]?){3}\\b"
           score: 1.0
       context: ["téléphone", "tel", "gsm", "mobile"]
       
