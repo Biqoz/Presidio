@@ -1,5 +1,5 @@
 # =====================================================================
-# CONFIGURATION PRESIDIO - v21 (FINALE ET COMPLÈTE)
+# CONFIGURATION PRESIDIO - v21 (FINALE ET CORRIGÉE)
 # =====================================================================
 supported_languages: [en, fr]
 
@@ -52,7 +52,8 @@ recognizer_registry:
       patterns: [{name: Email Pattern, regex: "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b", score: 1.0}]
       context: ["email", "courriel", "mail"]
 
-   - name: BelgianPhoneRecognizer
+    # --- CORRECTION FINALE : Règle Téléphone Belge Flexible ---
+    - name: BelgianPhoneRecognizer
       supported_language: fr
       supported_entity: PHONE_NUMBER
       patterns:
